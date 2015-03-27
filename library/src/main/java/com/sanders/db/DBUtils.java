@@ -23,8 +23,18 @@ public class DBUtils {
      * @return
      */
     public static String conversionClassNameToTableName(String className) {
-        className = className.substring(className.lastIndexOf(".") + 1, className.length()).toLowerCase();
-        return className;
+        className = className.substring(className.lastIndexOf(".") + 1, className.length());
+        char[] chars = className.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for (char c : chars) {
+            if (Character.isUpperCase(c)) {
+                sb.append("_").append(Character.toLowerCase(c));
+            } else {
+                sb.append(c);
+            }
+        }
+        sb.delete(0, 1);
+        return sb.toString();
     }
 
     /**

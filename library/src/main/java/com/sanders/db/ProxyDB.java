@@ -15,12 +15,27 @@ import java.util.Map;
 
 /**
  * Created by sanders on 15/2/8.
- * 请保证此类为单例
+ * 请保证此类为单例<br>
+ *     约定：1. 表名称必须以小写字母开始，单词之间用“_”下划线分开（当然也可以全部小写不分开）如：table_name、table_xxx、xx_xx
+ *          2. 表名称和实体类对应如下：
+ *          表：table_name 对应的实体类：TableName;
+ *          类：TableName 对应表名：table_name
+ *          3. 表字段和实体类字段对应如下：
+ *          表字段：field_name 对应实体类字段：fieldName.
+ *          实体类字段：fieldName 对应实体类字段：field_name.
+ *          4. 主键在IDColumn类里面有说明
+ *
  */
 public final class ProxyDB implements ProxyOperation {
 
+    /**
+     * Class的Field的缓存
+     */
     private Map<Class, Map<String, Field>> cacheFieldMaps = new HashMap<Class, Map<String, Field>>();
     private SQLiteOpenHelper helper;
+    /**
+     * 关闭数据库计数
+     */
     private int closeIndex = 0;
 
     public ProxyDB(SQLiteOpenHelper helper) {
