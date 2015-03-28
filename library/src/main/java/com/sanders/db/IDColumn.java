@@ -17,7 +17,7 @@ public class IDColumn implements Serializable {
     /**
      * 主键ID 自增长类型
      */
-    protected Long _key_id;
+    private long _key_id;
 
     public long getKeyId() {
         return _key_id;

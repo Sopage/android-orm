@@ -16,15 +16,14 @@ import java.util.Map;
 /**
  * Created by sanders on 15/2/8.
  * 请保证此类为单例<br>
- *     约定：1. 表名称必须以小写字母开始，单词之间用“_”下划线分开（当然也可以全部小写不分开）如：table_name、table_xxx、xx_xx
- *          2. 表名称和实体类对应如下：
- *          表：table_name 对应的实体类：TableName;
- *          类：TableName 对应表名：table_name
- *          3. 表字段和实体类字段对应如下：
- *          表字段：field_name 对应实体类字段：fieldName.
- *          实体类字段：fieldName 对应实体类字段：field_name.
- *          4. 主键在IDColumn类里面有说明
- *
+ * 约定：1. 表名称必须以小写字母开始，单词之间用“_”下划线分开（当然也可以全部小写不分开）如：table_name、table_xxx、xx_xx
+ * 2. 表名称和实体类对应如下：
+ * 表：table_name 对应的实体类：TableName;
+ * 类：TableName 对应表名：table_name
+ * 3. 表字段和实体类字段对应如下：
+ * 表字段：field_name 对应实体类字段：fieldName.
+ * 实体类字段：fieldName 对应实体类字段：field_name.
+ * 4. 主键在IDColumn类里面有说明
  */
 public final class ProxyDB implements ProxyOperation {
 
@@ -61,7 +60,7 @@ public final class ProxyDB implements ProxyOperation {
             SQLiteDatabase database = getDatabase();
             database.beginTransaction();
             long id = database.insert(tableName, null, values);
-            setKeyID(t, id);
+            t.setKeyId(id);
             database.setTransactionSuccessful();
             database.endTransaction();
             close(database);
@@ -88,7 +87,7 @@ public final class ProxyDB implements ProxyOperation {
         for (T t : list) {
             ContentValues values = conversionValues(clazz, t);
             long id = database.insert(tableName, null, values);
-            setKeyID(t, id);
+            t.setKeyId(id);
         }
         database.setTransactionSuccessful();
         database.endTransaction();
@@ -118,6 +117,7 @@ public final class ProxyDB implements ProxyOperation {
         if (values == null) {
             return -1;
         }
+        values.remove(IDColumn.KEY_ID);
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         int row = database.update(tableName, values, where, args);
@@ -137,7 +137,7 @@ public final class ProxyDB implements ProxyOperation {
     @Override
     public synchronized <T extends IDColumn> int update(T t) {
         long keyId;
-        if (t == null || (keyId = getKeyID(t)) < 1) {
+        if (t == null || (keyId = t.getKeyId()) < 1) {
             return -1;
         }
         return update(t, IDColumn.KEY_ID + "=" + keyId, null);
@@ -174,40 +174,12 @@ public final class ProxyDB implements ProxyOperation {
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         for (T t : list) {
-            long keyId = getKeyID(t);
+            long keyId = t.getKeyId();
             ContentValues values = conversionValues(clazz, t);
             if (values != null && keyId > 0) {
-                database.update(tableName, values, IDColumn.KEY_ID + "=?" + keyId, null);
+                values.remove(IDColumn.KEY_ID);
+                database.update(tableName, values, IDColumn.KEY_ID + "=" + keyId, null);
             }
-        }
-        database.setTransactionSuccessful();
-        database.endTransaction();
-        close(database);
-    }
-
-    /**
-     * 按指定条件更新集合内的数据
-     *
-     * @param list
-     * @param where
-     * @param args
-     * @param <T>
-     */
-    @Override
-    public synchronized <T extends IDColumn> void update(List<T> list, String where, String... args) {
-        if (DBUtils.isEmpty(list)) {
-            return;
-        }
-        if (where == null) {
-            throw new NullPointerException("缺少WHERE条件语句！");
-        }
-        Class clazz = list.get(0).getClass();
-        String tableName = DBUtils.conversionClassNameToTableName(clazz.getName());
-        SQLiteDatabase database = getDatabase();
-        database.beginTransaction();
-        for (T t : list) {
-            ContentValues values = conversionValues(clazz, t);
-            database.update(tableName, values, where, args);
         }
         database.setTransactionSuccessful();
         database.endTransaction();
@@ -232,7 +204,7 @@ public final class ProxyDB implements ProxyOperation {
         for (T t : list) {
             ContentValues values = conversionValues(clazz, t);
             if (values != null) {
-                long keyId = getKeyID(t);
+                long keyId = t.getKeyId();
                 if (keyId > 0) {
                     database.update(tableName, values, IDColumn.KEY_ID + "=" + keyId, null);
                 } else {
@@ -354,18 +326,6 @@ public final class ProxyDB implements ProxyOperation {
         }
     }
 
-    private <T extends IDColumn> long getKeyID(T t) {
-        try {
-            Class clazz = t.getClass();
-            Map<String, Field> fieldMap = getCacheFields(clazz);
-            Field field = fieldMap.get(IDColumn.KEY_ID);
-            return field.getLong(t);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return -1;
-        }
-    }
-
     private <T extends IDColumn> Map<String, Field> getCacheFields(Class<T> clazz) throws NoSuchFieldException {
         Map<String, Field> fieldMap;
         fieldMap = cacheFieldMaps.get(clazz);
@@ -389,18 +349,6 @@ public final class ProxyDB implements ProxyOperation {
         cacheFieldMaps.put(clazz, fieldMap);
         return fieldMap;
     }
-
-    private <T extends IDColumn> void setKeyID(T t, long id) {
-        try {
-            Class clazz = t.getClass();
-            Map<String, Field> fieldMap = getCacheFields(clazz);
-            Field field = fieldMap.get(IDColumn.KEY_ID);
-            field.setLong(t, id);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
 
     private <T extends IDColumn> T setClassValue(Class<T> clazz, Cursor cursor) {
         try {

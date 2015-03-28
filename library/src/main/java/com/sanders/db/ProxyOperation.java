@@ -12,7 +12,6 @@ public interface ProxyOperation {
     public <T extends IDColumn> int update(T t);
     public <T extends IDColumn> int update(T t, long keyId);
     public <T extends IDColumn> void update(List<T> list);
-    public <T extends IDColumn> void update(List<T> list, String where, String... args);
     public <T extends IDColumn> void insertOrUpdate(List<T> list);
     public void execSQL(String... sql);
     public int delete(Class<?> clazz, long keyId);
