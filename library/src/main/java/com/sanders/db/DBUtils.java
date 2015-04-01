@@ -4,10 +4,17 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import java.io.Closeable;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -186,6 +193,95 @@ public class DBUtils {
         }
     }
 
+    public static <T extends IDColumn> Map<String, Field> getCacheFields(Map<Class, Map<String, Field>> cacheFieldMaps, Class<T> clazz) throws NoSuchFieldException {
+        Map<String, Field> fieldMap;
+        fieldMap = cacheFieldMaps.get(clazz);
+        if (DBUtils.isNotEmpty(fieldMap)) {
+            return fieldMap;
+        }
+        fieldMap = new HashMap<String, Field>();
+        Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.KEY_ID);
+        superField.setAccessible(true);
+        fieldMap.put(IDColumn.KEY_ID, superField);
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            int modifiers = field.getModifiers();
+            if (modifiers == 25 || modifiers == 26 || modifiers == 28) {
+                continue;
+            }
+            String fieldName = field.getName();
+            field.setAccessible(true);
+            fieldMap.put(fieldName, field);
+        }
+        cacheFieldMaps.put(clazz, fieldMap);
+        return fieldMap;
+    }
+
+    /**
+     * Android中此方法不能够使用！！！
+     * @param packageName
+     * @return
+     * @throws IOException
+     * @throws ClassNotFoundException
+     */
+    public static List<Class> getClassFileNames(String packageName) throws IOException, ClassNotFoundException {
+        Enumeration<URL> enumeration = Thread.currentThread().getContextClassLoader().getResources(packageName.replace(".", "/"));
+        if (enumeration.hasMoreElements()) {
+            URL url = enumeration.nextElement();
+            String protocol = url.getProtocol();
+            if ("file".equals(protocol)) {
+                File classFile = new File(url.getFile());
+                String[] classFileNames = classFile.list(new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        if (name.contains("$") || !name.contains(".class")) {
+                            return false;
+                        }
+                        return true;
+                    }
+                });
+                if (classFileNames != null && classFileNames.length > 0) {
+                    List<Class> list = new ArrayList<Class>();
+                    for (String className : classFileNames) {
+                        Class clazz = Class.forName(packageName + "." + className.replace(".class",""));
+                        list.add(clazz);
+                    }
+                    return list;
+                }
+            }
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    /**
+     * 返回每个java字段对应的数据库类型
+     * @param field
+     * @return
+     */
+    public static String getDBFieldType(Field field){
+        String type = "NULL";
+        Class<?> classType = field.getType();
+        if (classType.equals(Integer.TYPE) || classType.equals(Integer.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(String.class)) {
+            type = "TEXT";
+        } else if (classType.equals(Boolean.TYPE) || classType.equals(Boolean.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(Long.TYPE) || classType.equals(Long.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(Double.TYPE) || classType.equals(Double.class)) {
+            type = "REAL";
+        } else if (classType.equals(Float.TYPE) || classType.equals(Float.class)) {
+            type = "REAL";
+        } else if (classType.equals(byte[].class)) {
+            type = "BLOB";
+        } else if (classType.equals(Short.TYPE) || classType.equals(Short.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(Date.class)) {
+            type = "INTEGER";
+        }
+        return type;
+    }
+
     public static boolean isEmpty(Map map) {
         if (map == null || map.size() < 1) {
             return true;
@@ -213,10 +309,6 @@ public class DBUtils {
             return true;
         }
         return false;
-    }
-
-    public static boolean isNotEmpty(Collection collection) {
-        return !isEmpty(collection);
     }
 
     public static void close(Closeable closeable) {

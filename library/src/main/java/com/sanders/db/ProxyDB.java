@@ -1,6 +1,7 @@
 package com.sanders.db;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
@@ -9,9 +10,11 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Created by sanders on 15/2/8.
@@ -25,12 +28,12 @@ import java.util.Map;
  * 实体类字段：fieldName 对应实体类字段：field_name.
  * 4. 主键在IDColumn类里面有说明
  */
-public final class ProxyDB implements ProxyOperation {
+public class ProxyDB implements ProxyOperation {
 
     /**
      * Class的Field的缓存
      */
-    private Map<Class, Map<String, Field>> cacheFieldMaps = new HashMap<Class, Map<String, Field>>();
+    private static Map<Class, Map<String, Field>> cacheFieldMaps = new HashMap<Class, Map<String, Field>>();
     private SQLiteOpenHelper helper;
     /**
      * 关闭数据库计数
@@ -39,6 +42,37 @@ public final class ProxyDB implements ProxyOperation {
 
     public ProxyDB(SQLiteOpenHelper helper) {
         this.helper = helper;
+    }
+
+    public static class DBBuilder {
+        private String dbName;
+        private int dbVersion;
+        private DefaultSQLiteOpenHelper.OnDBUpgrade upgrade;
+        private Set<Class> classes = new HashSet<Class>();
+
+        public DBBuilder builderDbName(String dbName) {
+            this.dbName = dbName;
+            return this;
+        }
+
+        public DBBuilder builderDbVersion(int dbVersion) {
+            this.dbVersion = dbVersion;
+            return this;
+        }
+
+        public DBBuilder builderTable(Class clazz) {
+            this.classes.add(clazz);
+            return this;
+        }
+
+        public DBBuilder setOnDBUpgrade(DefaultSQLiteOpenHelper.OnDBUpgrade upgrade){
+            this.upgrade = upgrade;
+            return this;
+        }
+
+        public ProxyDB build(Context context) {
+            return new ProxyDB(new DefaultSQLiteOpenHelper(context, dbName, dbVersion, classes, cacheFieldMaps, upgrade));
+        }
     }
 
     /**
@@ -326,34 +360,10 @@ public final class ProxyDB implements ProxyOperation {
         }
     }
 
-    private <T extends IDColumn> Map<String, Field> getCacheFields(Class<T> clazz) throws NoSuchFieldException {
-        Map<String, Field> fieldMap;
-        fieldMap = cacheFieldMaps.get(clazz);
-        if (DBUtils.isNotEmpty(fieldMap)) {
-            return fieldMap;
-        }
-        fieldMap = new HashMap<String, Field>();
-        Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.KEY_ID);
-        superField.setAccessible(true);
-        fieldMap.put(IDColumn.KEY_ID, superField);
-        Field[] fields = clazz.getDeclaredFields();
-        for (Field field : fields) {
-            int modifiers = field.getModifiers();
-            if (modifiers == 25 || modifiers == 26 || modifiers == 28) {
-                continue;
-            }
-            String fieldName = field.getName();
-            field.setAccessible(true);
-            fieldMap.put(fieldName, field);
-        }
-        cacheFieldMaps.put(clazz, fieldMap);
-        return fieldMap;
-    }
-
     private <T extends IDColumn> T setClassValue(Class<T> clazz, Cursor cursor) {
         try {
             String[] columnNames = cursor.getColumnNames();
-            Map<String, Field> fieldMap = getCacheFields(clazz);
+            Map<String, Field> fieldMap = DBUtils.getCacheFields(cacheFieldMaps, clazz);
             T t = clazz.newInstance();
             for (String columnName : columnNames) {
                 int index = cursor.getColumnIndex(columnName);
@@ -377,7 +387,7 @@ public final class ProxyDB implements ProxyOperation {
     private <T extends IDColumn> ContentValues conversionValues(Class<T> clazz, T t) {
         ContentValues values = new ContentValues();
         try {
-            Map<String, Field> fieldMap = getCacheFields(clazz);
+            Map<String, Field> fieldMap = DBUtils.getCacheFields(cacheFieldMaps, clazz);
             Collection<Field> collection = fieldMap.values();
             Iterator<Field> iterator = collection.iterator();
             while (iterator.hasNext()) {
@@ -393,6 +403,4 @@ public final class ProxyDB implements ProxyOperation {
             return null;
         }
     }
-
-
 }
