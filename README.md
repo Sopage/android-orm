@@ -14,6 +14,15 @@
 4. 主键在IDColumn类里:<br>
 	`主键为long类型自增长, 名称为_key_id`
 	
-###下次更新：
-1. 增加自动建表
+###使用自动建表方法
+	使用ProxyDB.DBBuilder构建ProxyDB自动建表
+		ProxyDB db = new ProxyDB.DBBuilder()
+                .builderDbName("test")
+                .builderDbVersion(1)
+                .builderTable(Table1.class)
+                .builderTable(Table_2.class)
+                .builderTable(TableBean.class)
+                .build(this);
 	
+###下次更新：
+1. 优化重构（希望给些建议）
