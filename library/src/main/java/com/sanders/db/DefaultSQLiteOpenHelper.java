@@ -4,9 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.lang.reflect.Field;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -15,14 +13,17 @@ import java.util.Set;
 public class DefaultSQLiteOpenHelper extends SQLiteOpenHelper {
 
     private Set<Class> classes;
-    private Map<Class, Map<String, Field>> cacheFieldMaps;
     private OnDBUpgrade upgrade;
+    private DBProxy proxy;
 
-    public DefaultSQLiteOpenHelper(Context context, String dbName, int dbVersion, Set<Class> classes, Map<Class, Map<String, Field>> cacheFieldMaps, OnDBUpgrade upgrade) {
+    public DefaultSQLiteOpenHelper(Context context, String dbName, int dbVersion, Set<Class> classes, OnDBUpgrade upgrade) {
         super(context, dbName, null, dbVersion);
         this.classes = classes;
-        this.cacheFieldMaps = cacheFieldMaps;
         this.upgrade = upgrade;
+    }
+
+    public void setDBProxy(DBProxy proxy) {
+        this.proxy = proxy;
     }
 
     @Override
@@ -30,10 +31,8 @@ public class DefaultSQLiteOpenHelper extends SQLiteOpenHelper {
         Iterator<Class> iterator = classes.iterator();
         while (iterator.hasNext()) {
             try {
-                String sql = getCreateTableSql(iterator.next());
-                if (DBUtils.isEmpty(sql)) {
-                    continue;
-                }
+                ClassInfo classInfo = proxy.getClassInfo(iterator.next());
+                String sql = classInfo.getCreateTableSql();
                 db.beginTransaction();
                 db.execSQL(sql);
                 db.setTransactionSuccessful();
@@ -43,24 +42,6 @@ public class DefaultSQLiteOpenHelper extends SQLiteOpenHelper {
                 db.endTransaction();
             }
         }
-    }
-
-    private <T extends IDColumn> String getCreateTableSql(Class<T> clazz) throws NoSuchFieldException {
-        String tableName = DBUtils.conversionClassNameToTableName(clazz.getName());
-//        StringBuilder sql = new StringBuilder("DROP TABLE IF EXISTS ").append(tableName).append(";");
-        StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE `").append(tableName).append("` (`").append(IDColumn.KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
-        Map<String, Field> fieldMap = DBUtils.getCacheFields(cacheFieldMaps, clazz);
-        for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
-            String javaField = entry.getKey();
-            if (IDColumn.KEY_ID.equals(javaField)) {
-                continue;
-            }
-            String tableField = DBUtils.conversionJavaFieldNameToDBFieldName(javaField);
-            sql.append(", `").append(tableField).append("` ").append(DBUtils.getDBFieldType(entry.getValue()));
-        }
-        sql.append(");");
-        return sql.toString();
     }
 
 

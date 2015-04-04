@@ -1,33 +1,24 @@
 package com.sanders.db.simple;
 
 import android.app.Activity;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
-import android.widget.LinearLayout;
 
-import com.sanders.db.DBUtils;
-import com.sanders.db.ProxyDB;
+import com.sanders.db.DBProxy;
 import com.sanders.db.Table1;
 import com.sanders.db.TableBean;
 import com.sanders.db.Table_2;
 
-import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
-
-import dalvik.system.DexFile;
-import dalvik.system.PathClassLoader;
 
 /**
  * Created by sanders on 15/3/27.
  */
 public class SimpleActivity extends Activity implements View.OnClickListener {
 
-    public ProxyDB db;
+    public DBProxy db;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,12 +30,15 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
 //            linearLayout.getChildAt(i).setOnClickListener(this);
 //        }
 
-        db = new ProxyDB.DBBuilder()
+        db = new DBProxy.DBBuilder()
                 .builderDbName("test")
                 .builderDbVersion(1)
                 .builderTable(Table1.class).builderTable(Table_2.class).builderTable(TableBean.class)
                 .build(this);
-        db.insert(new Table1());
+        List<Table1> list = db.queryList(Table1.class, null, null);
+        for(Table1 t : list){
+            Log.e("ESA", t.getKeyId()+"");
+        }
 //        db.queryList(Table1.class, null, null);
 //
 //        try {

@@ -1,0 +1,279 @@
+package com.sanders.db;
+
+import android.content.ContentValues;
+import android.database.Cursor;
+
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
+/**
+ * Created by sanders on 15/4/4.
+ */
+public class ClassInfo<T extends IDColumn> {
+
+    private Class<T> clazz;
+    private String tableName;
+    private Map<String, Field> fieldMap = new TreeMap<String, Field>();
+
+    public ClassInfo() {
+    }
+
+    public ClassInfo(Class<T> clazz) {
+        this.setClazz(clazz);
+    }
+
+    public void setClazz(Class<T> clazz) {
+        this.clazz = clazz;
+        this.tableName = conversionClassNameToTableName(clazz.getName());
+        try {
+            fieldMap.clear();
+            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.KEY_ID);
+            superField.setAccessible(true);
+            fieldMap.put(IDColumn.KEY_ID, superField);
+            Field[] fields = clazz.getDeclaredFields();
+            for (Field field : fields) {
+                int modifiers = field.getModifiers();
+                if (modifiers == 25 || modifiers == 26 || modifiers == 28) {
+                    continue;
+                }
+                field.setAccessible(true);
+                fieldMap.put(conversionJavaFieldNameToDBFieldName(field.getName()), field);
+            }
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public Class getClazz() {
+        return clazz;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public Map<String, Field> getFieldMap() {
+        return fieldMap;
+    }
+
+    public ContentValues getContentValues(T t) {
+        ContentValues values = new ContentValues();
+        for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
+            try {
+                String key = entry.getKey();
+                if(IDColumn.KEY_ID.equals(key)){
+                    continue;
+                }
+                putFieldValue(key, entry.getValue(), t, values);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+        return values;
+    }
+
+    public T getInstanceObject(Cursor cursor) {
+        try {
+            String[] columnNames = cursor.getColumnNames();
+            if (cursor.moveToNext()) {
+                T t = clazz.newInstance();
+                for (String columnName : columnNames) {
+                    int index = cursor.getColumnIndex(columnName);
+                    Field field;
+                    if (IDColumn.KEY_ID.equals(columnName)) {
+                        field = fieldMap.get(IDColumn.KEY_ID);
+                    } else {
+                        field = fieldMap.get(columnName);
+                    }
+                    setFieldValue(t, field, cursor, index);
+                }
+                return t;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public List<T> getInstanceList(Cursor cursor) {
+        List<T> list = new ArrayList<T>();
+        String[] columnNames = cursor.getColumnNames();
+        while (cursor.moveToNext()) {
+            try {
+                T t = clazz.newInstance();
+                for (String columnName : columnNames) {
+                    int index = cursor.getColumnIndex(columnName);
+                    Field field;
+                    if (IDColumn.KEY_ID.equals(columnName)) {
+                        field = fieldMap.get(IDColumn.KEY_ID);
+                    } else {
+                        field = fieldMap.get(columnName);
+                    }
+                    setFieldValue(t, field, cursor, index);
+                }
+                list.add(t);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return list;
+    }
+
+    public String getCreateTableSql() throws NoSuchFieldException {
+        StringBuilder sql = new StringBuilder();
+        sql.append("CREATE TABLE `").append(this.tableName).append("` (`").append(IDColumn.KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
+        for (Map.Entry<String, Field> entry : this.fieldMap.entrySet()) {
+            String javaField = entry.getKey();
+            if (IDColumn.KEY_ID.equals(javaField)) {
+                continue;
+            }
+            String tableField = conversionJavaFieldNameToDBFieldName(javaField);
+            sql.append(", `").append(tableField).append("` ").append(getDBFieldType(entry.getValue()));
+        }
+        sql.append(");");
+        return sql.toString();
+    }
+
+    private static final String getDBFieldType(Field field) {
+        String type = "NULL";
+        Class<?> classType = field.getType();
+        if (classType.equals(Integer.TYPE) || classType.equals(Integer.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(String.class)) {
+            type = "TEXT";
+        } else if (classType.equals(Boolean.TYPE) || classType.equals(Boolean.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(Long.TYPE) || classType.equals(Long.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(Double.TYPE) || classType.equals(Double.class)) {
+            type = "REAL";
+        } else if (classType.equals(Float.TYPE) || classType.equals(Float.class)) {
+            type = "REAL";
+        } else if (classType.equals(byte[].class)) {
+            type = "BLOB";
+        } else if (classType.equals(Short.TYPE) || classType.equals(Short.class)) {
+            type = "INTEGER";
+        } else if (classType.equals(Date.class)) {
+            type = "INTEGER";
+        }
+        return type;
+    }
+
+    private static <T extends IDColumn> void putFieldValue(String fieldName, Field field, T t, ContentValues values) throws IllegalAccessException {
+        Class<?> classType = field.getType();
+        if (classType.equals(Integer.TYPE)) {
+            values.put(fieldName, field.getInt(t));
+        } else if (classType.equals(Integer.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (Integer) value);
+            }
+        } else if (classType.equals(String.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (String) value);
+            }
+        } else if (classType.equals(Boolean.TYPE)) {
+            values.put(fieldName, field.getBoolean(t));
+        } else if (classType.equals(Boolean.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (Boolean) value);
+            }
+        } else if (classType.equals(Long.TYPE)) {
+            values.put(fieldName, field.getLong(t));
+        } else if (classType.equals(Long.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (Long) value);
+            }
+        } else if (classType.equals(Double.TYPE)) {
+            values.put(fieldName, field.getDouble(t));
+        } else if (classType.equals(Double.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (Double) value);
+            }
+        } else if (classType.equals(Float.TYPE)) {
+            values.put(fieldName, field.getFloat(t));
+        } else if (classType.equals(Float.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (Float) value);
+            }
+        } else if (classType.equals(byte[].class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (byte[]) value);
+            }
+        } else if (classType.equals(Short.TYPE)) {
+            values.put(fieldName, field.getShort(t));
+        } else if (classType.equals(Short.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, (Short) value);
+            }
+        } else if (classType.equals(Date.class)) {
+            Object value = field.get(t);
+            if (value != null) {
+                values.put(fieldName, ((Date) value).getTime());
+            }
+        }
+    }
+
+    private static final <T extends IDColumn> void setFieldValue(T t, Field field, Cursor cursor, int index) throws IllegalAccessException {
+        Class<?> classType = field.getType();
+        if (classType.equals(Integer.TYPE) || classType.equals(Integer.class)) {
+            field.set(t, cursor.getInt(index));
+        } else if (classType.equals(String.class)) {
+            field.set(t, cursor.getString(index));
+        } else if (classType.equals(Boolean.TYPE) || classType.equals(Boolean.class)) {
+            field.set(t, cursor.getInt(index) == 1 ? true : false);
+        } else if (classType.equals(Long.TYPE) || classType.equals(Long.class)) {
+            field.set(t, cursor.getLong(index));
+        } else if (classType.equals(Double.TYPE) || classType.equals(Double.class)) {
+            field.set(t, cursor.getDouble(index));
+        } else if (classType.equals(Float.TYPE) || classType.equals(Float.class)) {
+            field.set(t, cursor.getFloat(index));
+        } else if (classType.equals(byte[].class)) {
+            field.set(t, cursor.getBlob(index));
+        } else if (classType.equals(Short.TYPE) || classType.equals(Short.class)) {
+            field.set(t, cursor.getShort(index));
+        } else if (classType.equals(Date.class)) {
+            field.set(t, new Date(cursor.getLong(index)));
+        }
+    }
+
+    public static final String conversionClassNameToTableName(String className) {
+        className = className.substring(className.lastIndexOf(".") + 1, className.length());
+        char[] chars = className.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for (char c : chars) {
+            if (Character.isUpperCase(c)) {
+                sb.append("_").append(Character.toLowerCase(c));
+            } else {
+                sb.append(c);
+            }
+        }
+        sb.delete(0, 1);
+        return sb.toString();
+    }
+
+    public static final String conversionJavaFieldNameToDBFieldName(String fieldName) {
+        char[] chars = fieldName.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for (char c : chars) {
+            if (Character.isUpperCase(c)) {
+                sb.append("_").append(Character.toLowerCase(c));
+            } else {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
+    }
+}
