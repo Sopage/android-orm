@@ -15,8 +15,8 @@
 	`主键为long类型自增长, 名称为_key_id`
 	
 ###使用自动建表方法
-	使用ProxyDB.DBBuilder构建ProxyDB自动建表
-		ProxyDB db = new ProxyDB.DBBuilder()
+	DBProxy.DBBuilder构建ProxyDB自动建表
+		DBProxy db = new DBProxy.DBBuilder()
                 .builderDbName("test")
                 .builderDbVersion(1)
                 .builderTable(Table1.class)
