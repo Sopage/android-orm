@@ -1,8 +1,7 @@
 # cube-orm
 此项目是为Android简单封装的SQLite数据库ORM, 实现基本的单表CRUD，提高数据库开发效率。
-
-##使用方法
-###约定：
+## 使用方法
+### 约定：
 1. 表名称必须以小写字母开始，单词之间用“_”下划线分开(当然也可以全部小写不分开):<br>
 	`如：table_name、table_xxx、xx_xx`
 2. 表名称和实体类对应如下:<br>
@@ -14,15 +13,23 @@
 4. 主键在IDColumn类里:<br>
 	`主键为long类型自增长, 名称为_key_id`
 	
-###使用自动建表方法
-	DBProxy.DBBuilder构建ProxyDB自动建表
-		DBProxy db = new DBProxy.DBBuilder()
-                .builderDbName("test")
-                .builderDbVersion(1)
-                .builderTable(Table1.class)
-                .builderTable(Table_2.class)
-                .builderTable(TableBean.class)
-                .build(this);
-	
-###下次更新：
+### 使用方法
+##### 推荐
+	DBProxy db = new DBProxy.DBBuilder()
+        .builderDbName("test")
+        .builderDbVersion(1)
+        .builderTable(Table1.class)
+        .builderTable(Table_2.class)
+        .builderTable(TableBean.class)
+        .setOnDBUpgrade(new DefaultSQLiteOpenHelper.OnDBUpgrade() {
+                            @Override
+                            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+
+                            }
+                        })
+        .build(this);
+##### 实现自己的SQLiteOpenHelper
+    //使用此方式要按约定来
+    DBProxy db = new DBProxy(new SimpleOpenHelper(this));
+### 下次更新：
 1. 再议~！
