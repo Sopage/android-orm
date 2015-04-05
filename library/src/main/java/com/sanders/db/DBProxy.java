@@ -233,6 +233,42 @@ public class DBProxy {
         return delete(clazz, IDColumn.KEY_ID + "=" + keyId, null);
     }
 
+    public <T extends IDColumn> long queryCount(Class<T> clazz, String where, String... args) {
+        SQLiteDatabase database = getDatabase();
+        ClassInfo<T> classInfo = getClassInfo(clazz);
+        StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.KEY_ID).append(") AS count FROM ");
+        sql.append(classInfo.getTableName());
+        if (where != null && where.trim().length() > 0) {
+            sql.append(" WHERE ").append(where);
+        }
+        sql.append(";");
+        Cursor cursor = database.rawQuery(sql.toString(), args);
+        long count = 1;
+        if (cursor.moveToNext()) {
+            count = cursor.getLong(0);
+        }
+        close(cursor);
+        close(database);
+        return count;
+    }
+
+    public <T extends IDColumn> long queryKeyId(Class<T> clazz, String where, String... args) {
+        if (where == null) {
+            throw new NullPointerException("缺少WHERE条件语句！");
+        }
+        ClassInfo<T> classInfo = getClassInfo(clazz);
+        SQLiteDatabase database = getDatabase();
+        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.KEY_ID).append(" FROM ").append(classInfo.getTableName()).append(" WHERE ").append(where);
+        Cursor cursor = database.rawQuery(sql.toString(), args);
+        long id = -1;
+        if (cursor.moveToNext()) {
+            id = cursor.getLong(0);
+        }
+        close(cursor);
+        close(database);
+        return id;
+    }
+
     public <T extends IDColumn> T query(Class<T> clazz, String where, String... args) {
         SQLiteDatabase database = getDatabase();
         ClassInfo<T> classInfo = getClassInfo(clazz);
