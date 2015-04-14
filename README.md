@@ -14,6 +14,7 @@
 	`主键为long类型自增长, 名称为_key_id`
 	
 ### 使用方法
+    compile 'com.github.supersanders:cube-orm:1.2.1@aar'
 ##### 推荐
 	DBProxy db = new DBProxy.DBBuilder()
         .builderDbName("test")
