@@ -1,10 +1,12 @@
 package com.sanders.db;
 
+import android.annotation.TargetApi;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -56,6 +58,7 @@ public class DBProxy {
 
         /**
          * 设置数据库名称
+         *
          * @param dbName
          * @return
          */
@@ -66,6 +69,7 @@ public class DBProxy {
 
         /**
          * 设置数据库版本号
+         *
          * @param dbVersion
          * @return
          */
@@ -76,6 +80,7 @@ public class DBProxy {
 
         /**
          * 设置对应的实体类Class并会自动建表
+         *
          * @param clazz
          * @return
          */
@@ -86,6 +91,7 @@ public class DBProxy {
 
         /**
          * 设置数据库升级操作接口实现类
+         *
          * @param upgrade
          * @return
          */
@@ -96,6 +102,7 @@ public class DBProxy {
 
         /**
          * build一个数据库操作类
+         *
          * @param context
          * @return
          */
@@ -114,6 +121,7 @@ public class DBProxy {
 
     /**
      * 设置实现SQLiteOpenHelper类的实现
+     *
      * @param helper
      */
     private void setSQLiteOpenHelper(SQLiteOpenHelper helper) {
@@ -122,6 +130,7 @@ public class DBProxy {
 
     /**
      * 构建数据库操作类
+     *
      * @param helper
      */
     public DBProxy(SQLiteOpenHelper helper) {
@@ -130,6 +139,7 @@ public class DBProxy {
 
     /**
      * 获取一个实体类Class的详细信息并缓存
+     *
      * @param t
      * @param <T>
      * @return
@@ -144,6 +154,7 @@ public class DBProxy {
 
     /**
      * 获取一个实体类Class的详细信息并缓存
+     *
      * @param clazz
      * @param <T>
      * @return
@@ -158,6 +169,7 @@ public class DBProxy {
 
     /**
      * 插入对应实体到数据库
+     *
      * @param t
      * @param <T>
      * @return
@@ -184,6 +196,7 @@ public class DBProxy {
 
     /**
      * 批量插入对应实体类到数据库。建议集合不要太大，这是一次性事务
+     *
      * @param list
      * @param <T>
      */
@@ -208,6 +221,7 @@ public class DBProxy {
 
     /**
      * 更具条件更新实体到数据库
+     *
      * @param t
      * @param where
      * @param args
@@ -239,6 +253,7 @@ public class DBProxy {
 
     /**
      * 更具实体中的主键(_key_id)更新实体到数据库
+     *
      * @param t
      * @param <T>
      * @return
@@ -255,6 +270,7 @@ public class DBProxy {
 
     /**
      * 更具实体中的主键更新实体到数据库
+     *
      * @param t
      * @param keyId
      * @param <T>
@@ -266,6 +282,7 @@ public class DBProxy {
 
     /**
      * 更具集合实体中的主键(_key_id)更新实体到数据库
+     *
      * @param list
      * @param <T>
      */
@@ -293,6 +310,7 @@ public class DBProxy {
 
     /**
      * 插入或者更新集合
+     *
      * @param list
      * @param <T>
      */
@@ -322,6 +340,7 @@ public class DBProxy {
 
     /**
      * 执行原生sql
+     *
      * @param sql
      */
     public synchronized void execSQL(String... sql) {
@@ -336,8 +355,8 @@ public class DBProxy {
     }
 
     /**
-     *
      * 更具条件删除数据库内容
+     *
      * @param clazz
      * @param where
      * @param args
@@ -356,6 +375,7 @@ public class DBProxy {
 
     /**
      * 根据主键删除数据库内容
+     *
      * @param clazz
      * @param keyId
      * @return
@@ -366,6 +386,7 @@ public class DBProxy {
 
     /**
      * 查询数量
+     *
      * @param clazz
      * @param where
      * @param args
@@ -393,6 +414,7 @@ public class DBProxy {
 
     /**
      * 查询主键
+     *
      * @param clazz
      * @param where
      * @param args
@@ -418,6 +440,7 @@ public class DBProxy {
 
     /**
      * 根据条件查询一条记录到实体
+     *
      * @param clazz
      * @param where
      * @param args
@@ -436,6 +459,7 @@ public class DBProxy {
 
     /**
      * 根据主键查询实体
+     *
      * @param clazz
      * @param keyId
      * @param <T>
@@ -447,6 +471,7 @@ public class DBProxy {
 
     /**
      * 根据sql语句查询实体
+     *
      * @param clazz
      * @param sql
      * @param args
@@ -465,6 +490,7 @@ public class DBProxy {
 
     /**
      * 根据sql语句查询实体集合
+     *
      * @param clazz
      * @param sql
      * @param args
@@ -483,6 +509,7 @@ public class DBProxy {
 
     /**
      * 更具条件插叙实体集合
+     *
      * @param clazz
      * @param selection
      * @param selectionArgs
@@ -505,6 +532,7 @@ public class DBProxy {
 
     /**
      * 分页查询实体集合
+     *
      * @param clazz
      * @param selection
      * @param pageNumber
@@ -520,6 +548,7 @@ public class DBProxy {
 
     /**
      * 根据条件查询实体集合
+     *
      * @param clazz
      * @param selection
      * @param selectionArgs
@@ -531,6 +560,7 @@ public class DBProxy {
     }
 
     /**
+     * <b>此方法适用于Build.VERSION_CODES.HONEYCOMB以上版本</b><br>
      * 查询一条记录到Map
      * @param sql
      * @param args
@@ -553,17 +583,18 @@ public class DBProxy {
     }
 
     /**
+     * <b>此方法适用于Build.VERSION_CODES.HONEYCOMB以上版本</b><br>
      * 根据sql语句查询map到list
      * @param sql
      * @param args
      * @return
      */
-    public List<Map<String, Object>> queryList(String sql, String... args){
+    public List<Map<String, Object>> queryList(String sql, String... args) {
         SQLiteDatabase database = getDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         String[] names = cursor.getColumnNames();
         List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
-        while (cursor.moveToNext()){
+        while (cursor.moveToNext()) {
             Map<String, Object> map = new HashMap<String, Object>();
             for (String columnName : names) {
                 putMapKeyValue(cursor, columnName, map);
@@ -575,8 +606,13 @@ public class DBProxy {
         return list;
     }
 
-    private void putMapKeyValue(Cursor cursor, String columnName, Map<String, Object> map){
+    @TargetApi(Build.VERSION_CODES.HONEYCOMB)
+    private void putMapKeyValue(Cursor cursor, String columnName, Map<String, Object> map) {
         int columnIndex = cursor.getColumnIndex(columnName);
+        if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB){
+            map.put(columnName, cursor.getString(columnIndex));
+            return;
+        }
         int type = cursor.getType(columnIndex);
         switch (type) {
             case Cursor.FIELD_TYPE_INTEGER:

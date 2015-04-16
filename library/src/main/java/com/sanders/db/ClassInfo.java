@@ -48,16 +48,8 @@ public class ClassInfo<T extends IDColumn> {
         }
     }
 
-    public Class getClazz() {
-        return clazz;
-    }
-
     public String getTableName() {
         return tableName;
-    }
-
-    public Map<String, Field> getFieldMap() {
-        return fieldMap;
     }
 
     public ContentValues getContentValues(T t) {
@@ -142,24 +134,14 @@ public class ClassInfo<T extends IDColumn> {
     private static final String getDBFieldType(Field field) {
         String type = "NULL";
         Class<?> classType = field.getType();
-        if (classType.equals(Integer.TYPE) || classType.equals(Integer.class)) {
-            type = "INTEGER";
-        } else if (classType.equals(String.class)) {
+        if (classType.equals(String.class) || classType.equals(CharSequence.class)) {
             type = "TEXT";
-        } else if (classType.equals(Boolean.TYPE) || classType.equals(Boolean.class)) {
+        } else if (classType.equals(Integer.TYPE) || classType.equals(Integer.class) || classType.equals(Long.TYPE) || classType.equals(Long.class) || classType.equals(Short.TYPE) || classType.equals(Short.class) || classType.equals(Date.class) || classType.equals(Boolean.TYPE) || classType.equals(Boolean.class)) {
             type = "INTEGER";
-        } else if (classType.equals(Long.TYPE) || classType.equals(Long.class)) {
-            type = "INTEGER";
-        } else if (classType.equals(Double.TYPE) || classType.equals(Double.class)) {
-            type = "REAL";
-        } else if (classType.equals(Float.TYPE) || classType.equals(Float.class)) {
+        } else if (classType.equals(Double.TYPE) || classType.equals(Double.class) || classType.equals(Float.TYPE) || classType.equals(Float.class)) {
             type = "REAL";
         } else if (classType.equals(byte[].class)) {
             type = "BLOB";
-        } else if (classType.equals(Short.TYPE) || classType.equals(Short.class)) {
-            type = "INTEGER";
-        } else if (classType.equals(Date.class)) {
-            type = "INTEGER";
         }
         return type;
     }
