@@ -264,7 +264,7 @@ public class DBProxy {
         } else if ((keyId = t.getPrimaryKeyId()) < 1) {
             return -1;
         }
-        return update(t, IDColumn.PRIMARY_KEY_ID + "=" + keyId, null);
+        return update(t, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
     }
 
     /**
@@ -276,7 +276,7 @@ public class DBProxy {
      * @return
      */
     public synchronized <T extends IDColumn> int update(T t, long keyId) {
-        return update(t, IDColumn.PRIMARY_KEY_ID + "=" + keyId, null);
+        return update(t, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
     }
 
     /**
@@ -379,7 +379,7 @@ public class DBProxy {
      * @return
      */
     public synchronized int delete(Class<?> clazz, long keyId) {
-        return delete(clazz, IDColumn.PRIMARY_KEY_ID + "=" + keyId, null);
+        return delete(clazz, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
     }
 
     /**
@@ -464,7 +464,7 @@ public class DBProxy {
      * @return
      */
     public <T extends IDColumn> T query(Class<T> clazz, long keyId) {
-        return query(clazz, IDColumn.PRIMARY_KEY_ID + "=" + keyId, null);
+        return query(clazz, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
     }
 
     /**

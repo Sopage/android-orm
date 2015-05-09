@@ -15,7 +15,7 @@ public abstract class OnDBUpgrade {
      * @param newVersion
      * @return
      */
-    boolean beginUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+    public boolean beginUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         return false;
     }
 
@@ -26,7 +26,7 @@ public abstract class OnDBUpgrade {
      * @param newVersion
      * @return
      */
-    boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         return false;
     }
 
@@ -37,7 +37,7 @@ public abstract class OnDBUpgrade {
      * @param newVersion
      * @return
      */
-    boolean endUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
+    public boolean endUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         return false;
     }
 }
