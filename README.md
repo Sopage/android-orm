@@ -15,23 +15,35 @@
 	`主键为long类型自增长, 名称为_primary_key_id`
 	
 ### 使用方法
-    compile 'com.github.supersanders:cube-orm:1.2.2@aar'
+    compile 'com.github.supersanders:cube-orm:1.5@aar'
+##### 混淆配置
+    -keep public class * extends com.sanders.db.IDColumn
 ##### 推荐
 	DBProxy db = new DBProxy.DBBuilder()
-        .builderDbName("test")
-        .builderDbVersion(1)
-        .builderTable(Table1.class)
-        .builderTable(Table_2.class)
-        .builderTable(TableBean.class)
-        .setOnDBUpgrade(new DefaultSQLiteOpenHelper.OnDBUpgrade() {
-                            @Override
-                            public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        .setDbName("db")
+        .setDbVersion(1)
+        .createTable(TableBean.class)
+        .setOnDBUpgrade(new OnDBUpgrade() {
 
+                            @Override
+                            public boolean beginUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                                //开始升级数据库之前调用此方法
+                                return super.beginUpgrade(db, oldVersion, newVersion);
+                            }
+
+                            @Override
+                            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                                //数据库升级调用此方法
+                                return super.onUpgrade(db, oldVersion, newVersion);
+                            }
+
+                            @Override
+                            public boolean endUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                                //数据库升级结束调用此方法
+                                return super.endUpgrade(db, oldVersion, newVersion);
                             }
                         })
         .build(this);
 ##### 实现自己的SQLiteOpenHelper
     //使用此方式要按约定来
-    DBProxy db = new DBProxy(new SimpleOpenHelper(this));
-### 下次更新：
-1. 再议~！
+    DBProxy db = new DBProxy(new SimpleOpenHelper(context));

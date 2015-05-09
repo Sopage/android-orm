@@ -1,12 +1,14 @@
 package com.sanders.db.simple;
 
 import android.app.Activity;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 
 import com.sanders.db.DBProxy;
+import com.sanders.db.OnDBUpgrade;
 import com.sanders.db.Table1;
 import com.sanders.db.TableBean;
 import com.sanders.db.Table_2;
@@ -35,6 +37,23 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
                 .setDbName("test")
                 .setDbVersion(3)
                 .createTable(UserTable.class).createTable(Table1.class).createTable(Table_2.class).createTable(TableBean.class)
+                .setOnDBUpgrade(new OnDBUpgrade() {
+
+                    @Override
+                    public boolean beginUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                        return super.beginUpgrade(db, oldVersion, newVersion);
+                    }
+
+                    @Override
+                    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                        return super.onUpgrade(db, oldVersion, newVersion);
+                    }
+
+                    @Override
+                    public boolean endUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                        return super.endUpgrade(db, oldVersion, newVersion);
+                    }
+                })
                 .build(this);
     }
 
