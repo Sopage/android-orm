@@ -19,9 +19,6 @@ public class ClassInfo<T extends IDColumn> {
     private String tableName;
     private Map<String, Field> fieldMap = new TreeMap<String, Field>();
 
-    public ClassInfo() {
-    }
-
     public ClassInfo(Class<T> clazz) {
         this.setClazz(clazz);
     }
@@ -31,9 +28,9 @@ public class ClassInfo<T extends IDColumn> {
         this.tableName = conversionClassNameToTableName(clazz.getName());
         try {
             fieldMap.clear();
-            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.KEY_ID);
+            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_KEY_ID);
             superField.setAccessible(true);
-            fieldMap.put(IDColumn.KEY_ID, superField);
+            fieldMap.put(IDColumn.PRIMARY_KEY_ID, superField);
             Field[] fields = clazz.getDeclaredFields();
             for (Field field : fields) {
                 int modifiers = field.getModifiers();
@@ -52,12 +49,16 @@ public class ClassInfo<T extends IDColumn> {
         return tableName;
     }
 
+    public Map<String, Field> getFieldMap() {
+        return fieldMap;
+    }
+
     public ContentValues getContentValues(T t) {
         ContentValues values = new ContentValues();
         for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
             try {
                 String key = entry.getKey();
-                if(IDColumn.KEY_ID.equals(key)){
+                if(IDColumn.PRIMARY_KEY_ID.equals(key)){
                     continue;
                 }
                 putFieldValue(key, entry.getValue(), t, values);
@@ -77,8 +78,8 @@ public class ClassInfo<T extends IDColumn> {
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
-                    if (IDColumn.KEY_ID.equals(columnName)) {
-                        field = fieldMap.get(IDColumn.KEY_ID);
+                    if (IDColumn.PRIMARY_KEY_ID.equals(columnName)) {
+                        field = fieldMap.get(IDColumn.PRIMARY_KEY_ID);
                     } else {
                         field = fieldMap.get(columnName);
                     }
@@ -101,8 +102,8 @@ public class ClassInfo<T extends IDColumn> {
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
-                    if (IDColumn.KEY_ID.equals(columnName)) {
-                        field = fieldMap.get(IDColumn.KEY_ID);
+                    if (IDColumn.PRIMARY_KEY_ID.equals(columnName)) {
+                        field = fieldMap.get(IDColumn.PRIMARY_KEY_ID);
                     } else {
                         field = fieldMap.get(columnName);
                     }
@@ -118,10 +119,10 @@ public class ClassInfo<T extends IDColumn> {
 
     public String getCreateTableSql() throws NoSuchFieldException {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE `").append(this.tableName).append("` (`").append(IDColumn.KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
+        sql.append("CREATE TABLE `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
         for (Map.Entry<String, Field> entry : this.fieldMap.entrySet()) {
             String javaField = entry.getKey();
-            if (IDColumn.KEY_ID.equals(javaField)) {
+            if (IDColumn.PRIMARY_KEY_ID.equals(javaField)) {
                 continue;
             }
             String tableField = conversionJavaFieldNameToDBFieldName(javaField);
@@ -131,7 +132,7 @@ public class ClassInfo<T extends IDColumn> {
         return sql.toString();
     }
 
-    private static final String getDBFieldType(Field field) {
+    public static String getDBFieldType(Field field) {
         String type = "NULL";
         Class<?> classType = field.getType();
         if (classType.equals(String.class) || classType.equals(CharSequence.class)) {
@@ -231,7 +232,7 @@ public class ClassInfo<T extends IDColumn> {
         }
     }
 
-    public static final String conversionClassNameToTableName(String className) {
+    public static String conversionClassNameToTableName(String className) {
         className = className.substring(className.lastIndexOf(".") + 1, className.length());
         char[] chars = className.toCharArray();
         StringBuilder sb = new StringBuilder();
@@ -246,7 +247,7 @@ public class ClassInfo<T extends IDColumn> {
         return sb.toString();
     }
 
-    public static final String conversionJavaFieldNameToDBFieldName(String fieldName) {
+    public static String conversionJavaFieldNameToDBFieldName(String fieldName) {
         char[] chars = fieldName.toCharArray();
         StringBuilder sb = new StringBuilder();
         for (char c : chars) {

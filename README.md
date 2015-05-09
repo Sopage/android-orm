@@ -12,7 +12,7 @@
 	`表字段：field_name 对应实体类字段：fieldName.`
 	`实体类字段：fieldName 对应实体类字段：field_name.`
 4. 主键在IDColumn类里:<br>
-	`主键为long类型自增长, 名称为_key_id`
+	`主键为long类型自增长, 名称为_primary_key_id`
 	
 ### 使用方法
     compile 'com.github.supersanders:cube-orm:1.2.2@aar'

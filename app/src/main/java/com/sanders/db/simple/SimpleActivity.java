@@ -32,9 +32,9 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
         }
 
         db = new DBProxy.DBBuilder()
-                .builderDbName("test")
-                .builderDbVersion(1)
-                .builderTable(UserTable.class).builderTable(Table1.class).builderTable(Table_2.class).builderTable(TableBean.class)
+                .setDbName("test")
+                .setDbVersion(3)
+                .createTable(UserTable.class).createTable(Table1.class).createTable(Table_2.class).createTable(TableBean.class)
                 .build(this);
     }
 
@@ -55,12 +55,12 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
                 }
                 db.insert(list);
                 for (int i = 0; i < 10; i++) {
-                    Log.e("ESA", "KEY_ID=" + list.get(i).getKeyId());
+                    Log.e("ESA", "PRIMARY_KEY_ID=" + list.get(i).getPrimaryKeyId());
                 }
                 break;
             case R.id.btn_update:
                 table = new UserTable("update", "update", 100);
-                table.setKeyId(id);
+                table.setPrimaryKeyId(id);
                 db.update(table);
                 id++;
                 break;
@@ -68,7 +68,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
                 list = new ArrayList<UserTable>();
                 for (int i = 11; i <= 20; i++) {
                     table = new UserTable("UPDATE", "UPDATE", 0);
-                    table.setKeyId(i);
+                    table.setPrimaryKeyId(i);
                     list.add(table);
                 }
                 db.update(list);
@@ -83,7 +83,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
             case R.id.btn_query_list:
                 list = db.queryList(UserTable.class, "age=?", String.valueOf(100));
                 for (UserTable t : list) {
-                    Log.e("ESA", "KEY_ID=" + t.getKeyId());
+                    Log.e("ESA", "PRIMARY_KEY_ID=" + t.getPrimaryKeyId());
                 }
                 break;
         }

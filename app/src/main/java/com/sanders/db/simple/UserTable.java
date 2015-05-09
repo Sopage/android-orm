@@ -5,11 +5,10 @@ import com.sanders.db.IDColumn;
 /**
  * Created by sanders on 15/3/28.
  */
-public class UserTable extends IDColumn{
+public class UserTable extends IDColumn {
 
     private String userName;
     private String passWord;
-    private int age;
 
     public UserTable() {
     }
@@ -17,7 +16,6 @@ public class UserTable extends IDColumn{
     public UserTable(String userName, String passWord, int age) {
         this.userName = userName;
         this.passWord = passWord;
-        this.age = age;
     }
 
     public String getUserName() {
@@ -36,11 +34,4 @@ public class UserTable extends IDColumn{
         this.passWord = passWord;
     }
 
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
 }
