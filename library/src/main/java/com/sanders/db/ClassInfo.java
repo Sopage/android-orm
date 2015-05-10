@@ -58,7 +58,7 @@ public class ClassInfo<T extends IDColumn> {
         for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
             try {
                 String key = entry.getKey();
-                if(IDColumn.PRIMARY_KEY_ID.equals(key)){
+                if (IDColumn.PRIMARY_KEY_ID.equals(key)) {
                     continue;
                 }
                 putFieldValue(key, entry.getValue(), t, values);
@@ -83,7 +83,9 @@ public class ClassInfo<T extends IDColumn> {
                     } else {
                         field = fieldMap.get(columnName);
                     }
-                    setFieldValue(t, field, cursor, index);
+                    if (field != null) {
+                        setFieldValue(t, field, cursor, index);
+                    }
                 }
                 return t;
             }
@@ -107,7 +109,9 @@ public class ClassInfo<T extends IDColumn> {
                     } else {
                         field = fieldMap.get(columnName);
                     }
-                    setFieldValue(t, field, cursor, index);
+                    if (field != null) {
+                        setFieldValue(t, field, cursor, index);
+                    }
                 }
                 list.add(t);
             } catch (Exception e) {
@@ -119,7 +123,7 @@ public class ClassInfo<T extends IDColumn> {
 
     public String getCreateTableSql() throws NoSuchFieldException {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
         for (Map.Entry<String, Field> entry : this.fieldMap.entrySet()) {
             String javaField = entry.getKey();
             if (IDColumn.PRIMARY_KEY_ID.equals(javaField)) {

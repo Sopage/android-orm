@@ -7,6 +7,8 @@ import java.util.Date;
  */
 public class TableBean extends IDColumn{
 
+    private long userName;
+    private long passWord;
     private int f1;
     private String f2;
     private long f3;

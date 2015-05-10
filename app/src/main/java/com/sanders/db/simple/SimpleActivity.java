@@ -35,25 +35,11 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
 
         db = new DBProxy.DBBuilder()
                 .setDbName("test")
-                .setDbVersion(3)
-                .createTable(UserTable.class).createTable(Table1.class).createTable(Table_2.class).createTable(TableBean.class)
-                .setOnDBUpgrade(new OnDBUpgrade() {
-
-                    @Override
-                    public boolean beginUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                        return super.beginUpgrade(db, oldVersion, newVersion);
-                    }
-
-                    @Override
-                    public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                        return super.onUpgrade(db, oldVersion, newVersion);
-                    }
-
-                    @Override
-                    public boolean endUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                        return super.endUpgrade(db, oldVersion, newVersion);
-                    }
-                })
+                .setDbVersion(10)
+                .createTable(UserTable.class)
+                .createTable(TableBean.class)
+                .createTable(Table1.class)
+                .createTable(Table1.class)
                 .build(this);
     }
 
@@ -64,13 +50,13 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
         int viewId = v.getId();
         switch (viewId) {
             case R.id.btn_insert:
-                UserTable table = new UserTable("username", "password", 100);
+                UserTable table = new UserTable("username", "password");
                 db.insert(table);
                 break;
             case R.id.btn_insert_list:
                 List<UserTable> list = new ArrayList<UserTable>();
                 for (int i = 1; i <= 10; i++) {
-                    list.add(new UserTable("username" + i, "password" + i, i));
+//                    list.add(new UserTable("username" + i, "password" + i, i));
                 }
                 db.insert(list);
                 for (int i = 0; i < 10; i++) {
@@ -78,17 +64,17 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
                 }
                 break;
             case R.id.btn_update:
-                table = new UserTable("update", "update", 100);
-                table.setPrimaryKeyId(id);
-                db.update(table);
+//                table = new UserTable("update", "update", 100);
+//                table.setPrimaryKeyId(id);
+//                db.update(table);
                 id++;
                 break;
             case R.id.btn_update_list:
                 list = new ArrayList<UserTable>();
                 for (int i = 11; i <= 20; i++) {
-                    table = new UserTable("UPDATE", "UPDATE", 0);
-                    table.setPrimaryKeyId(i);
-                    list.add(table);
+//                    table = new UserTable("UPDATE", "UPDATE", 0);
+//                    table.setPrimaryKeyId(i);
+//                    list.add(table);
                 }
                 db.update(list);
                 break;

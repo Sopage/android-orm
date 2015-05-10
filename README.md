@@ -18,12 +18,14 @@
     compile 'com.github.supersanders:cube-orm:1.5@aar'
 ##### 混淆配置
     -keep public class * extends com.sanders.db.IDColumn
+##### 自动升级数据库说明
+    如果使用自动升级，若表字段类型有变则会重新创建新表并备份旧表为 "表名_oldVersion",这需要手动将数据导入新表。
 ##### 推荐
 	DBProxy db = new DBProxy.DBBuilder()
         .setDbName("db")
         .setDbVersion(1)
         .createTable(TableBean.class)
-        .setOnDBUpgrade(new OnDBUpgrade() {
+        .setOnDBUpgrade(new OnDBUpgrade() {//不设置此值则代表自动升级
 
                             @Override
                             public boolean beginUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -33,7 +35,7 @@
 
                             @Override
                             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                                //数据库升级调用此方法
+                                //数据库升级调用此方法 返回true是自己处理升级，false则自动升级
                                 return super.onUpgrade(db, oldVersion, newVersion);
                             }
 

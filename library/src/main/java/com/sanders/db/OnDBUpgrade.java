@@ -24,7 +24,7 @@ public abstract class OnDBUpgrade {
      * @param db
      * @param oldVersion
      * @param newVersion
-     * @return
+     * @return true是手动升级，false是自动升级
      */
     public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion){
         return false;

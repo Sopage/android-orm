@@ -6,9 +6,11 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -38,7 +40,6 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
                 ClassInfo classInfo = proxy.getClassInfo(iterator.next());
                 String sql = classInfo.getCreateTableSql();
                 db.beginTransaction();
-                db.execSQL("DROP TABLE IF EXISTS `" + classInfo.getTableName() + "`;");
                 db.execSQL(sql);
                 db.setTransactionSuccessful();
             } catch (NoSuchFieldException e) {
@@ -51,10 +52,15 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
 
     private void upgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         Iterator<Class> iterator = classes.iterator();
+        List<String> sqlList = new ArrayList<String>();
         while (iterator.hasNext()) {
+            sqlList.clear();
             ClassInfo classInfo = proxy.getClassInfo(iterator.next());
             String tableName = classInfo.getTableName();
-            Cursor cursor = db.rawQuery("PRAGMA table_info(`" + tableName + "`", null);//查询表结构
+            Cursor cursor = db.rawQuery("PRAGMA table_info(`" + tableName + "`)", null);//查询表结构
+            if (cursor.getCount() < 2) {
+                continue;
+            }
             Map<String, String> dbFieldMap = new HashMap<String, String>();
             while (cursor.moveToNext()) {
                 String name = cursor.getString(cursor.getColumnIndex("name"));
@@ -66,19 +72,19 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
             //更新数据库字段及字段类型
             for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
                 if (!dbFieldMap.containsKey(entry.getKey())) {
-                    //TODO add db field
-                    db.execSQL("ALTER TABLE `" + tableName + "` ADD COLUMN `" + entry.getKey() + "` " + ClassInfo.getDBFieldType(entry.getValue()) + ";");
+                    sqlList.add("ALTER TABLE `" + tableName + "` ADD COLUMN `" + entry.getKey() + "` " + ClassInfo.getDBFieldType(entry.getValue()) + ";");
                 } else if (!dbFieldMap.get(entry.getKey()).equals(ClassInfo.getDBFieldType(entry.getValue()))) {
-                    //TODO update db field type
-                    db.execSQL("");
+                    sqlList.clear();
+                    sqlList.add("ALTER TABLE `" + tableName + "` RENAME TO `" + tableName + "_" + oldVersion + "`;");
+                    break;
                 }
             }
-            //删除数据库没用的字段
-            for (Map.Entry<String, String> entry : dbFieldMap.entrySet()) {
-                if (!fieldMap.containsKey(entry.getKey())) {
-                    //TODO delete db field
-                }
+            db.beginTransaction();
+            for (String sql : sqlList) {
+                db.execSQL(sql);
             }
+            db.setTransactionSuccessful();
+            db.endTransaction();
         }
     }
 
@@ -88,6 +94,7 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
         if (upgrade != null && upgrade.beginUpgrade(db, oldVersion, newVersion)) ;
 
         if (upgrade == null || upgrade.onUpgrade(db, oldVersion, newVersion)) {
+            this.upgrade(db, oldVersion, newVersion);
             this.onCreate(db);
         }
         if (upgrade != null && upgrade.endUpgrade(db, oldVersion, newVersion)) ;
