@@ -15,7 +15,7 @@
 	`主键为long类型自增长, 名称为_primary_key_id`
 	
 ### 使用方法
-    compile 'com.github.supersanders:cube-orm:1.5@aar'
+    compile 'com.github.supersanders:cube-orm:2.0@aar'
 ##### 混淆配置
     -keep public class * extends com.sanders.db.IDColumn
 ##### 自动升级数据库说明
