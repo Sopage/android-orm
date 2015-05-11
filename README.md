@@ -15,6 +15,7 @@
 	`主键为long类型自增长, 名称为_primary_key_id`
 5. 数据库操作:<br>
 	`DBProxy类操作`
+
 ### 使用方法
     compile 'com.github.supersanders:cube-orm:2.0@aar'
 ##### 混淆配置
