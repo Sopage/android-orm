@@ -1,5 +1,5 @@
 # cube-orm
-此项目是为Android简单封装的SQLite数据库ORM, 实现基本的单表CRUD，提高数据库开发效率。
+此项目是为Android简单封装的SQLite数据库ORM, 实现自动建表和自动更新升级，实现基本的单表CRUD，提高数据库开发效率。
 ## 使用方法
 ### 约定：
 ###### 所有的实体都要继承IDColumn.java类
@@ -13,7 +13,8 @@
 	`实体类字段：fieldName 对应实体类字段：field_name.`
 4. 主键在IDColumn类里:<br>
 	`主键为long类型自增长, 名称为_primary_key_id`
-	
+5. 数据库操作:<br>
+	`DBProxy类操作`
 ### 使用方法
     compile 'com.github.supersanders:cube-orm:2.0@aar'
 ##### 混淆配置
@@ -22,9 +23,9 @@
     如果使用自动升级，若表字段类型有变则会重新创建新表并备份旧表为 "表名_oldVersion",这需要手动将数据导入新表。
 ##### 推荐
 	DBProxy db = new DBProxy.DBBuilder()
-        .setDbName("db")
-        .setDbVersion(1)
-        .createTable(TableBean.class)
+        .setDbName("db")//数据库名称
+        .setDbVersion(1)//版本
+        .createTable(TableBean.class)//建表
         .setOnDBUpgrade(new OnDBUpgrade() {//不设置此值则代表自动升级
 
                             @Override
