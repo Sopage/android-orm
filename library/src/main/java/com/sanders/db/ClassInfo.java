@@ -6,9 +6,9 @@ import android.database.Cursor;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 /**
  * Created by sanders on 15/4/4.
@@ -17,7 +17,7 @@ public class ClassInfo<T extends IDColumn> {
 
     private Class<T> clazz;
     private String tableName;
-    private Map<String, Field> fieldMap = new TreeMap<String, Field>();
+    private Map<String, Field> fieldMap = new LinkedHashMap<String, Field>();
 
     public ClassInfo(Class<T> clazz) {
         this.setClazz(clazz);
@@ -28,9 +28,9 @@ public class ClassInfo<T extends IDColumn> {
         this.tableName = conversionClassNameToTableName(clazz.getName());
         try {
             fieldMap.clear();
-            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_KEY_ID);
+            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_KEY);
             superField.setAccessible(true);
-            fieldMap.put(IDColumn.PRIMARY_KEY_ID, superField);
+            fieldMap.put(IDColumn.PRIMARY_KEY, superField);
             Field[] fields = clazz.getDeclaredFields();
             for (Field field : fields) {
                 int modifiers = field.getModifiers();
@@ -58,7 +58,7 @@ public class ClassInfo<T extends IDColumn> {
         for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
             try {
                 String key = entry.getKey();
-                if (IDColumn.PRIMARY_KEY_ID.equals(key)) {
+                if (IDColumn.PRIMARY_KEY.equals(key)) {
                     continue;
                 }
                 putFieldValue(key, entry.getValue(), t, values);
@@ -78,8 +78,8 @@ public class ClassInfo<T extends IDColumn> {
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
-                    if (IDColumn.PRIMARY_KEY_ID.equals(columnName)) {
-                        field = fieldMap.get(IDColumn.PRIMARY_KEY_ID);
+                    if (IDColumn.PRIMARY_KEY.equals(columnName)) {
+                        field = fieldMap.get(IDColumn.PRIMARY_KEY);
                     } else {
                         field = fieldMap.get(columnName);
                     }
@@ -104,8 +104,8 @@ public class ClassInfo<T extends IDColumn> {
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
-                    if (IDColumn.PRIMARY_KEY_ID.equals(columnName)) {
-                        field = fieldMap.get(IDColumn.PRIMARY_KEY_ID);
+                    if (IDColumn.PRIMARY_KEY.equals(columnName)) {
+                        field = fieldMap.get(IDColumn.PRIMARY_KEY);
                     } else {
                         field = fieldMap.get(columnName);
                     }
@@ -123,10 +123,10 @@ public class ClassInfo<T extends IDColumn> {
 
     public String getCreateTableSql() throws NoSuchFieldException {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY_ID).append("` INTEGER NOT NULL PRIMARY KEY");
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY");
         for (Map.Entry<String, Field> entry : this.fieldMap.entrySet()) {
             String javaField = entry.getKey();
-            if (IDColumn.PRIMARY_KEY_ID.equals(javaField)) {
+            if (IDColumn.PRIMARY_KEY.equals(javaField)) {
                 continue;
             }
             String tableField = conversionJavaFieldNameToDBFieldName(javaField);

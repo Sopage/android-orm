@@ -33,14 +33,12 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
             linearLayout.getChildAt(i).setOnClickListener(this);
         }
 
-        db = new DBProxy.DBBuilder()
-                .setDbName("test")
-                .setDbVersion(10)
-                .createTable(UserTable.class)
-                .createTable(TableBean.class)
-                .createTable(Table1.class)
-                .createTable(Table1.class)
-                .build(this);
+//        db = new DBProxy.DBBuilder()
+//                .setDbName("test")
+//                .setDbVersion(10)
+//                .createTable(UserTable.class)
+//                .build(this);
+        db = new DBProxy.DBBuilder().setDbFilePath("/mnt/sdcard/test.sqlite").build(this);
     }
 
     long id = 1;
@@ -60,7 +58,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
                 }
                 db.insert(list);
                 for (int i = 0; i < 10; i++) {
-                    Log.e("ESA", "PRIMARY_KEY_ID=" + list.get(i).getPrimaryKeyId());
+                    Log.e("ESA", "PRIMARY_KEY=" + list.get(i).getPrimaryKey());
                 }
                 break;
             case R.id.btn_update:
@@ -88,7 +86,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
             case R.id.btn_query_list:
                 list = db.queryList(UserTable.class, "age=?", String.valueOf(100));
                 for (UserTable t : list) {
-                    Log.e("ESA", "PRIMARY_KEY_ID=" + t.getPrimaryKeyId());
+                    Log.e("ESA", "PRIMARY_KEY=" + t.getPrimaryKey());
                 }
                 break;
         }

@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -25,10 +26,17 @@ public class DBProxy {
      * 用于缓存实体类Class和实体类详情
      */
     public Map<Class, ClassInfo> classInfoMap = new HashMap<Class, ClassInfo>();
+
     /**
      * SQLiteOpenHelper实现类
      */
     private SQLiteOpenHelper helper;
+
+    /**
+     * SQLiteDatabase数据库
+     */
+    private SQLiteDatabase database;
+
     /**
      * 数据库操作计数，防止异常关闭问题
      */
@@ -42,6 +50,10 @@ public class DBProxy {
          * 数据库名称
          */
         private String dbName;
+        /**
+         * 外建数据库文件
+         */
+        private File dbFile;
         /**
          * 数据库版本
          */
@@ -64,6 +76,27 @@ public class DBProxy {
         public DBBuilder setDbName(String dbName) {
             this.dbName = dbName;
             return this;
+        }
+
+        /**
+         * 设置外部数据库文件
+         *
+         * @param dbFile
+         * @return
+         */
+        public DBBuilder setDbFile(File dbFile) {
+            this.dbFile = dbFile;
+            return this;
+        }
+
+        /**
+         * 设置外部数据库文件路径
+         *
+         * @param dbFilePath
+         * @return
+         */
+        public DBBuilder setDbFilePath(String dbFilePath) {
+            return this.setDbFile(new File(dbFilePath));
         }
 
         /**
@@ -101,15 +134,21 @@ public class DBProxy {
 
         /**
          * build一个数据库操作类
+         * 如果是外部数据库文件则不能自动升级及创建表
          *
          * @param context
          * @return
          */
         public DBProxy build(Context context) {
             DBProxy proxy = new DBProxy();
-            SQLiteOpenHelperProxy helper = new SQLiteOpenHelperProxy(context, dbName, dbVersion, classes, upgrade);
-            helper.setDBProxy(proxy);
-            proxy.setSQLiteOpenHelper(helper);
+            if (dbName != null && dbName.trim().length() > 0 && dbVersion > 0) {
+                SQLiteOpenHelperProxy helper = new SQLiteOpenHelperProxy(context, dbName, dbVersion, classes, upgrade);
+                helper.setDBProxy(proxy);
+                proxy.setSQLiteOpenHelper(helper);
+            } else if (dbFile != null) {
+                SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
+                proxy.setSQLiteDatabase(database);
+            }
             return proxy;
         }
     }
@@ -125,6 +164,10 @@ public class DBProxy {
      */
     private void setSQLiteOpenHelper(SQLiteOpenHelper helper) {
         this.helper = helper;
+    }
+
+    private void setSQLiteDatabase(SQLiteDatabase database) {
+        this.database = database;
     }
 
     /**
@@ -184,7 +227,7 @@ public class DBProxy {
             SQLiteDatabase database = getDatabase();
             database.beginTransaction();
             long id = database.insert(tableName, null, values);
-            t.setPrimaryKeyId(id);
+            t.setPrimaryKey(id);
             database.setTransactionSuccessful();
             database.endTransaction();
             close(database);
@@ -210,7 +253,7 @@ public class DBProxy {
             ContentValues values = classInfo.getContentValues(t);
             if (values != null) {
                 long id = database.insert(classInfo.getTableName(), null, values);
-                t.setPrimaryKeyId(id);
+                t.setPrimaryKey(id);
             }
         }
         database.setTransactionSuccessful();
@@ -240,7 +283,7 @@ public class DBProxy {
         if (values == null) {
             return -1;
         }
-        values.remove(IDColumn.PRIMARY_KEY_ID);
+        values.remove(IDColumn.PRIMARY_KEY);
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         int row = database.update(tableName, values, where, args);
@@ -261,10 +304,10 @@ public class DBProxy {
         long keyId;
         if (t == null) {
             throw new NullPointerException("T对象不能为NULL！");
-        } else if ((keyId = t.getPrimaryKeyId()) < 1) {
+        } else if ((keyId = t.getPrimaryKey()) < 1) {
             return -1;
         }
-        return update(t, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
+        return update(t, IDColumn.PRIMARY_KEY + "=" + keyId);
     }
 
     /**
@@ -276,7 +319,7 @@ public class DBProxy {
      * @return
      */
     public synchronized <T extends IDColumn> int update(T t, long keyId) {
-        return update(t, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
+        return update(t, IDColumn.PRIMARY_KEY + "=" + keyId);
     }
 
     /**
@@ -294,16 +337,34 @@ public class DBProxy {
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         for (T t : list) {
-            long keyId = t.getPrimaryKeyId();
+            long keyId = t.getPrimaryKey();
             ContentValues values = classInfo.getContentValues(t);
             if (values != null && keyId > 0) {
-                values.remove(IDColumn.PRIMARY_KEY_ID);
-                database.update(tableName, values, IDColumn.PRIMARY_KEY_ID + "=" + keyId, null);
+                values.remove(IDColumn.PRIMARY_KEY);
+                database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + keyId, null);
             }
         }
         database.setTransactionSuccessful();
         database.endTransaction();
         close(database);
+    }
+
+    public synchronized <T extends IDColumn> long insertOrUpdate(T t) {
+        if (t == null) {
+            return -1;
+        }
+        ClassInfo<T> classInfo = getClassInfo(t);
+        ContentValues values = classInfo.getContentValues(t);
+        long rowId = -1;
+        if (values != null) {
+            SQLiteDatabase database = getDatabase();
+            if (t.getPrimaryKey() > 0) {
+                rowId = update(t);
+            } else {
+                rowId = insert(t);
+            }
+        }
+        return rowId;
     }
 
     /**
@@ -323,9 +384,9 @@ public class DBProxy {
         for (T t : list) {
             ContentValues values = classInfo.getContentValues(t);
             if (values != null) {
-                long keyId = t.getPrimaryKeyId();
+                long keyId = t.getPrimaryKey();
                 if (keyId > 0) {
-                    database.update(tableName, values, IDColumn.PRIMARY_KEY_ID + "=" + keyId, null);
+                    database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + keyId, null);
                 } else {
                     database.insert(tableName, null, values);
                 }
@@ -379,7 +440,7 @@ public class DBProxy {
      * @return
      */
     public synchronized int delete(Class<?> clazz, long keyId) {
-        return delete(clazz, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
+        return delete(clazz, IDColumn.PRIMARY_KEY + "=" + keyId);
     }
 
     /**
@@ -394,7 +455,7 @@ public class DBProxy {
     public <T extends IDColumn> long queryCount(Class<T> clazz, String where, String... args) {
         SQLiteDatabase database = getDatabase();
         ClassInfo<T> classInfo = getClassInfo(clazz);
-        StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.PRIMARY_KEY_ID).append(") AS count FROM ");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.PRIMARY_KEY).append(") AS count FROM ");
         sql.append(classInfo.getTableName());
         if (where != null && where.trim().length() > 0) {
             sql.append(" WHERE ").append(where);
@@ -419,13 +480,13 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    public <T extends IDColumn> long queryKeyId(Class<T> clazz, String where, String... args) {
+    public <T extends IDColumn> long queryPrimaryKey(Class<T> clazz, String where, String... args) {
         if (where == null) {
             throw new NullPointerException("缺少WHERE条件语句！");
         }
         ClassInfo<T> classInfo = getClassInfo(clazz);
         SQLiteDatabase database = getDatabase();
-        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_KEY_ID).append(" FROM ").append(classInfo.getTableName()).append(" WHERE ").append(where);
+        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_KEY).append(" FROM ").append(classInfo.getTableName()).append(" WHERE ").append(where);
         Cursor cursor = database.rawQuery(sql.toString(), args);
         long id = -1;
         if (cursor.moveToNext()) {
@@ -464,7 +525,7 @@ public class DBProxy {
      * @return
      */
     public <T extends IDColumn> T query(Class<T> clazz, long keyId) {
-        return query(clazz, IDColumn.PRIMARY_KEY_ID + "=" + keyId);
+        return query(clazz, IDColumn.PRIMARY_KEY + "=" + keyId);
     }
 
     /**
@@ -636,13 +697,19 @@ public class DBProxy {
 
     private synchronized SQLiteDatabase getDatabase() {
         closeIndex++;
-        return helper.getWritableDatabase();
+        if (helper != null) {
+            return helper.getReadableDatabase();
+        } else if (database != null) {
+            return database;
+        } else {
+            throw new NullPointerException("SQLiteOpenHelper is null or SQLiteDatabase is null, please set the value");
+        }
     }
 
     private synchronized void close(SQLiteDatabase database) {
         closeIndex--;
         if (closeIndex == 0) {
-            if (database != null && database.isOpen()) {
+            if (database != null && database != this.database && database.isOpen()) {
                 database.close();
             }
         }
