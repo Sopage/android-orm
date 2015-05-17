@@ -19,12 +19,12 @@ public abstract class DBProxy {
     /**
      * 数据库操作计数，防止异常关闭问题
      */
-    private volatile int openCounting = 0;
+    private int mOpenCount = 0;
 
     /**
      * 用于缓存实体类Class和实体类详情
      */
-    protected final Map<Class, ClassInfo> classInfoMap = new HashMap<Class, ClassInfo>();
+    protected final Map<Class, ClassInfo> mClassInfoMap = new HashMap<Class, ClassInfo>();
 
     /**
      * 获取一个实体类Class的详细信息并缓存
@@ -45,7 +45,7 @@ public abstract class DBProxy {
      * @return
      */
     protected final <T extends IDColumn> ClassInfo getClassInfo(Class<T> clazz) {
-        ClassInfo classInfo = classInfoMap.get(clazz);
+        ClassInfo classInfo = mClassInfoMap.get(clazz);
         if (classInfo == null) {
             classInfo = new ClassInfo(clazz);
         }
@@ -540,15 +540,15 @@ public abstract class DBProxy {
     }
 
     private SQLiteDatabase getDatabase() {
-        openCounting++;
+        mOpenCount++;
         return getCreateDatabase();
     }
 
     public abstract SQLiteDatabase getCreateDatabase();
 
     private void close(SQLiteDatabase database) {
-        openCounting--;
-        if (openCounting == 0 && database != null && database.isOpen()) {
+        mOpenCount--;
+        if (mOpenCount == 0 && database != null && database.isOpen()) {
             database.close();
         }
     }
@@ -566,4 +566,7 @@ public abstract class DBProxy {
         return false;
     }
 
+    public int getOpenCount() {
+        return mOpenCount;
+    }
 }

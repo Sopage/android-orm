@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,32 +18,32 @@ import java.util.Map;
  */
 public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
 
-    private Collection<Class> classes;
-    private OnDBUpgrade upgrade;
-    private DBProxy proxy;
+    private Collection<Class> mClasses;
+    private OnDBUpgrade mUpgrade;
+    private DBProxy mProxy;
 
     public SQLiteOpenHelperProxy(Context context, String dbName, int dbVersion) {
         super(context, dbName, null, dbVersion);
     }
 
     public void addTableBeans(Collection<Class> classes) {
-        this.classes = classes;
+        this.mClasses = classes;
     }
 
     public void setOnUpgrade(OnDBUpgrade upgrade) {
-        this.upgrade = upgrade;
+        this.mUpgrade = upgrade;
     }
 
     public void setDBProxy(DBProxy proxy) {
-        this.proxy = proxy;
+        this.mProxy = proxy;
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Iterator<Class> iterator = classes.iterator();
+        Iterator<Class> iterator = mClasses.iterator();
         while (iterator.hasNext()) {
             try {
-                ClassInfo classInfo = proxy.getClassInfo(iterator.next());
+                ClassInfo classInfo = mProxy.getClassInfo(iterator.next());
                 String sql = classInfo.getCreateTableSql();
                 db.execSQL(sql);
             } catch (NoSuchFieldException e) {
@@ -54,11 +53,11 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
     }
 
     private void upgrade(SQLiteDatabase db, int oldVersion) {
-        Iterator<Class> iterator = classes.iterator();
+        Iterator<Class> iterator = mClasses.iterator();
         List<String> sqlList = new ArrayList<String>();
         while (iterator.hasNext()) {
             sqlList.clear();
-            ClassInfo classInfo = proxy.getClassInfo(iterator.next());
+            ClassInfo classInfo = mProxy.getClassInfo(iterator.next());
             String tableName = classInfo.getTableName();
             Cursor cursor = db.rawQuery("PRAGMA table_info(`" + tableName + "`)", null);//查询表结构
             if (cursor.getCount() < 1) {
@@ -91,7 +90,7 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (upgrade == null || upgrade.onUpgrade(db, oldVersion, newVersion)) {
+        if (mUpgrade == null || mUpgrade.onUpgrade(db, oldVersion, newVersion)) {
             this.upgrade(db, oldVersion);
             this.onCreate(db);
         }

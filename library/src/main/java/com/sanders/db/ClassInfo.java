@@ -15,20 +15,20 @@ import java.util.Map;
  */
 public class ClassInfo<T extends IDColumn> {
 
-    private Class<T> clazz;
-    private String tableName;
-    private Map<String, Field> fieldMap = new LinkedHashMap<String, Field>();
+    private Class<T> mClass;
+    private String mTableName;
+    private Map<String, Field> mFieldMap = new LinkedHashMap<String, Field>();
 
     private ClassInfo() {
     }
 
     public ClassInfo(Class<T> clazz) {
-        this.clazz = clazz;
-        this.tableName = conversionClassNameToTableName(clazz.getName());
+        this.mClass = clazz;
+        this.mTableName = conversionClassNameToTableName(clazz.getName());
         try {
             Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_KEY);
             superField.setAccessible(true);
-            fieldMap.put(IDColumn.PRIMARY_KEY, superField);
+            mFieldMap.put(IDColumn.PRIMARY_KEY, superField);
             Field[] fields = clazz.getDeclaredFields();
             for (Field field : fields) {
                 int modifiers = field.getModifiers();
@@ -36,7 +36,7 @@ public class ClassInfo<T extends IDColumn> {
                     continue;
                 }
                 field.setAccessible(true);
-                fieldMap.put(conversionJavaFieldNameToDBFieldName(field.getName()), field);
+                mFieldMap.put(conversionJavaFieldNameToDBFieldName(field.getName()), field);
             }
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
@@ -44,16 +44,16 @@ public class ClassInfo<T extends IDColumn> {
     }
 
     public String getTableName() {
-        return tableName;
+        return mTableName;
     }
 
     public Map<String, Field> getFieldMap() {
-        return fieldMap;
+        return mFieldMap;
     }
 
     public ContentValues getContentValues(T t) {
         ContentValues values = new ContentValues();
-        for (Map.Entry<String, Field> entry : fieldMap.entrySet()) {
+        for (Map.Entry<String, Field> entry : mFieldMap.entrySet()) {
             try {
                 String key = entry.getKey();
                 if (IDColumn.PRIMARY_KEY.equals(key)) {
@@ -72,14 +72,14 @@ public class ClassInfo<T extends IDColumn> {
         try {
             String[] columnNames = cursor.getColumnNames();
             if (cursor.moveToNext()) {
-                T t = clazz.newInstance();
+                T t = mClass.newInstance();
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
                     if (IDColumn.PRIMARY_KEY.equals(columnName)) {
-                        field = fieldMap.get(IDColumn.PRIMARY_KEY);
+                        field = mFieldMap.get(IDColumn.PRIMARY_KEY);
                     } else {
-                        field = fieldMap.get(columnName);
+                        field = mFieldMap.get(columnName);
                     }
                     if (field != null) {
                         setFieldValue(t, field, cursor, index);
@@ -98,14 +98,14 @@ public class ClassInfo<T extends IDColumn> {
         String[] columnNames = cursor.getColumnNames();
         while (cursor.moveToNext()) {
             try {
-                T t = clazz.newInstance();
+                T t = mClass.newInstance();
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
                     if (IDColumn.PRIMARY_KEY.equals(columnName)) {
-                        field = fieldMap.get(IDColumn.PRIMARY_KEY);
+                        field = mFieldMap.get(IDColumn.PRIMARY_KEY);
                     } else {
-                        field = fieldMap.get(columnName);
+                        field = mFieldMap.get(columnName);
                     }
                     if (field != null) {
                         setFieldValue(t, field, cursor, index);
@@ -121,8 +121,8 @@ public class ClassInfo<T extends IDColumn> {
 
     public String getCreateTableSql() throws NoSuchFieldException {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT");
-        for (Map.Entry<String, Field> entry : this.fieldMap.entrySet()) {
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.mTableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT");
+        for (Map.Entry<String, Field> entry : this.mFieldMap.entrySet()) {
             String javaField = entry.getKey();
             if (IDColumn.PRIMARY_KEY.equals(javaField)) {
                 continue;
