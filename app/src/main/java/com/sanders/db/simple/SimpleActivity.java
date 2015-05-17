@@ -1,6 +1,7 @@
 package com.sanders.db.simple;
 
 import android.app.Activity;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -9,6 +10,9 @@ import android.widget.LinearLayout;
 import com.sanders.db.DBContext;
 import com.sanders.db.DBFile;
 import com.sanders.db.DBProxy;
+import com.sanders.db.OnDBUpgrade;
+
+import java.io.File;
 
 /**
  * Created by sanders on 15/3/27.
@@ -27,17 +31,22 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
             linearLayout.getChildAt(i).setOnClickListener(this);
         }
 
-        DBContext dbContext = new DBContext("database", 3, null);
+        DBContext dbContext = new DBContext("database", 3, new OnDBUpgrade() {
+            @Override
+            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+                return false;
+            }
+        });
         dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
         db = dbContext.buildDBProxy(this);
         dbContext = new DBContext("database", 3, null);
         dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
         db2 = dbContext.buildDBProxy(this);
 
-//        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
-//        db = dbFile.buildDBProxy();
-//        dbFile = new DBFile("/mnt/sdcard/database.db");
-//        db2 = dbFile.buildDBProxy();
+        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
+        db = dbFile.buildDBProxy();
+        dbFile = new DBFile(new File("/mnt/sdcard/database.db"));
+        db2 = dbFile.buildDBProxy();
     }
 
     @Override
