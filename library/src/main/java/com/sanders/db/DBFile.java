@@ -3,8 +3,6 @@ package com.sanders.db;
 import android.database.sqlite.SQLiteDatabase;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.LinkedHashSet;
 
 /**
  * Created by sanders on 15/5/17.
@@ -12,10 +10,6 @@ import java.util.LinkedHashSet;
 public class DBFile {
 
     private File dbFile;
-    private Collection<Class> tables = new LinkedHashSet<Class>();
-
-    public DBFile() {
-    }
 
     public DBFile(File dbFile) {
         this.dbFile = dbFile;

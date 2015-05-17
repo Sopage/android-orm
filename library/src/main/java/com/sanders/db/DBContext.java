@@ -16,36 +16,9 @@ public class DBContext {
     private OnDBUpgrade upgrade;
     private Collection<Class> tables = new LinkedHashSet<Class>();
 
-    public DBContext() {
-    }
-
-    public DBContext(String name, int version) {
-        this.name = name;
-        this.version = version;
-    }
-
     public DBContext(String name, int version, OnDBUpgrade upgrade) {
         this.name = name;
         this.version = version;
-        this.upgrade = upgrade;
-    }
-
-    public DBContext(String name, int version, OnDBUpgrade upgrade, Collection<Class> tables) {
-        this.name = name;
-        this.version = version;
-        this.upgrade = upgrade;
-        this.tables.addAll(tables);
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
-    }
-
-    public void setUpgrade(OnDBUpgrade upgrade) {
         this.upgrade = upgrade;
     }
 
