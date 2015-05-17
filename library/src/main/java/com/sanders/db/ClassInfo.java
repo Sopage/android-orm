@@ -19,15 +19,13 @@ public class ClassInfo<T extends IDColumn> {
     private String tableName;
     private Map<String, Field> fieldMap = new LinkedHashMap<String, Field>();
 
-    public ClassInfo(Class<T> clazz) {
-        this.setClazz(clazz);
+    private ClassInfo() {
     }
 
-    public void setClazz(Class<T> clazz) {
+    public ClassInfo(Class<T> clazz) {
         this.clazz = clazz;
         this.tableName = conversionClassNameToTableName(clazz.getName());
         try {
-            fieldMap.clear();
             Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_KEY);
             superField.setAccessible(true);
             fieldMap.put(IDColumn.PRIMARY_KEY, superField);
@@ -123,7 +121,7 @@ public class ClassInfo<T extends IDColumn> {
 
     public String getCreateTableSql() throws NoSuchFieldException {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY");
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.tableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT");
         for (Map.Entry<String, Field> entry : this.fieldMap.entrySet()) {
             String javaField = entry.getKey();
             if (IDColumn.PRIMARY_KEY.equals(javaField)) {

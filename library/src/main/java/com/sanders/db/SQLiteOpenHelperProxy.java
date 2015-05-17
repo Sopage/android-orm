@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import java.io.File;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -22,9 +23,15 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
     private OnDBUpgrade upgrade;
     private DBProxy proxy;
 
-    public SQLiteOpenHelperProxy(Context context, String dbName, int dbVersion, Collection<Class> classes, OnDBUpgrade upgrade) {
+    public SQLiteOpenHelperProxy(Context context, String dbName, int dbVersion) {
         super(context, dbName, null, dbVersion);
+    }
+
+    public void addTableBeans(Collection<Class> classes) {
         this.classes = classes;
+    }
+
+    public void setOnUpgrade(OnDBUpgrade upgrade) {
         this.upgrade = upgrade;
     }
 
@@ -39,18 +46,14 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
             try {
                 ClassInfo classInfo = proxy.getClassInfo(iterator.next());
                 String sql = classInfo.getCreateTableSql();
-                db.beginTransaction();
                 db.execSQL(sql);
-                db.setTransactionSuccessful();
             } catch (NoSuchFieldException e) {
                 e.printStackTrace();
-            } finally {
-                db.endTransaction();
             }
         }
     }
 
-    private void upgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    private void upgrade(SQLiteDatabase db, int oldVersion) {
         Iterator<Class> iterator = classes.iterator();
         List<String> sqlList = new ArrayList<String>();
         while (iterator.hasNext()) {
@@ -58,7 +61,7 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
             ClassInfo classInfo = proxy.getClassInfo(iterator.next());
             String tableName = classInfo.getTableName();
             Cursor cursor = db.rawQuery("PRAGMA table_info(`" + tableName + "`)", null);//查询表结构
-            if (cursor.getCount() < 2) {
+            if (cursor.getCount() < 1) {
                 continue;
             }
             Map<String, String> dbFieldMap = new HashMap<String, String>();
@@ -79,24 +82,18 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
                     break;
                 }
             }
-            db.beginTransaction();
             for (String sql : sqlList) {
                 db.execSQL(sql);
             }
-            db.setTransactionSuccessful();
-            db.endTransaction();
         }
     }
 
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        if (upgrade != null && upgrade.beginUpgrade(db, oldVersion, newVersion)) ;
-
         if (upgrade == null || upgrade.onUpgrade(db, oldVersion, newVersion)) {
-            this.upgrade(db, oldVersion, newVersion);
+            this.upgrade(db, oldVersion);
             this.onCreate(db);
         }
-        if (upgrade != null && upgrade.endUpgrade(db, oldVersion, newVersion)) ;
     }
 }

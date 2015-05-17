@@ -1,183 +1,31 @@
 package com.sanders.db;
 
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.database.sqlite.SQLiteOpenHelper;
 import android.os.Build;
+import android.util.Log;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * Created by sanders on 15/4/4.
- * 数据库操作类
+ * Created by sanders on 15/5/17.
  */
-public class DBProxy {
-
-    /**
-     * 用于缓存实体类Class和实体类详情
-     */
-    public Map<Class, ClassInfo> classInfoMap = new HashMap<Class, ClassInfo>();
-
-    /**
-     * SQLiteOpenHelper实现类
-     */
-    private SQLiteOpenHelper helper;
-
-    /**
-     * SQLiteDatabase数据库
-     */
-    private SQLiteDatabase database;
+public abstract class DBProxy {
 
     /**
      * 数据库操作计数，防止异常关闭问题
      */
-    private int closeIndex = 0;
+    private volatile int openCounting = 0;
 
     /**
-     * 构建数据库操作类
+     * 用于缓存实体类Class和实体类详情
      */
-    public static class DBBuilder {
-        /**
-         * 数据库名称
-         */
-        private String dbName;
-        /**
-         * 外建数据库文件
-         */
-        private File dbFile;
-        /**
-         * 数据库版本
-         */
-        private int dbVersion;
-        /**
-         * 数据库升级接口
-         */
-        private OnDBUpgrade upgrade;
-        /**
-         * 自动建表Class集合
-         */
-        private Set<Class> classes = new HashSet<Class>();
-
-        /**
-         * 设置数据库名称
-         *
-         * @param dbName
-         * @return
-         */
-        public DBBuilder setDbName(String dbName) {
-            this.dbName = dbName;
-            return this;
-        }
-
-        /**
-         * 设置外部数据库文件
-         *
-         * @param dbFile
-         * @return
-         */
-        public DBBuilder setDbFile(File dbFile) {
-            this.dbFile = dbFile;
-            return this;
-        }
-
-        /**
-         * 设置外部数据库文件路径
-         *
-         * @param dbFilePath
-         * @return
-         */
-        public DBBuilder setDbFilePath(String dbFilePath) {
-            return this.setDbFile(new File(dbFilePath));
-        }
-
-        /**
-         * 设置数据库版本号
-         *
-         * @param dbVersion
-         * @return
-         */
-        public DBBuilder setDbVersion(int dbVersion) {
-            this.dbVersion = dbVersion;
-            return this;
-        }
-
-        /**
-         * 设置对应的实体类Class并会自动建表
-         *
-         * @param clazz
-         * @return
-         */
-        public DBBuilder createTable(Class clazz) {
-            this.classes.add(clazz);
-            return this;
-        }
-
-        /**
-         * 设置数据库升级操作接口实现类
-         *
-         * @param upgrade
-         * @return
-         */
-        public DBBuilder setOnDBUpgrade(OnDBUpgrade upgrade) {
-            this.upgrade = upgrade;
-            return this;
-        }
-
-        /**
-         * build一个数据库操作类
-         * 如果是外部数据库文件则不能自动升级及创建表
-         *
-         * @param context
-         * @return
-         */
-        public DBProxy build(Context context) {
-            DBProxy proxy = new DBProxy();
-            if (dbName != null && dbName.trim().length() > 0 && dbVersion > 0) {
-                SQLiteOpenHelperProxy helper = new SQLiteOpenHelperProxy(context, dbName, dbVersion, classes, upgrade);
-                helper.setDBProxy(proxy);
-                proxy.setSQLiteOpenHelper(helper);
-            } else if (dbFile != null) {
-                SQLiteDatabase database = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
-                proxy.setSQLiteDatabase(database);
-            }
-            return proxy;
-        }
-    }
-
-    private DBProxy() {
-
-    }
-
-    /**
-     * 设置实现SQLiteOpenHelper类的实现
-     *
-     * @param helper
-     */
-    private void setSQLiteOpenHelper(SQLiteOpenHelper helper) {
-        this.helper = helper;
-    }
-
-    private void setSQLiteDatabase(SQLiteDatabase database) {
-        this.database = database;
-    }
-
-    /**
-     * 构建数据库操作类
-     *
-     * @param helper
-     */
-    public DBProxy(SQLiteOpenHelper helper) {
-        this.helper = helper;
-    }
+    protected final Map<Class, ClassInfo> classInfoMap = new HashMap<Class, ClassInfo>();
 
     /**
      * 获取一个实体类Class的详细信息并缓存
@@ -186,12 +34,8 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    private synchronized <T extends IDColumn> ClassInfo getClassInfo(T t) {
-        ClassInfo classInfo = classInfoMap.get(t.getClass());
-        if (classInfo == null) {
-            classInfo = new ClassInfo(t.getClass());
-        }
-        return classInfo;
+    protected final <T extends IDColumn> ClassInfo getClassInfo(T t) {
+        return this.getClassInfo(t.getClass());
     }
 
     /**
@@ -201,13 +45,14 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    public synchronized <T extends IDColumn> ClassInfo getClassInfo(Class<T> clazz) {
+    protected final <T extends IDColumn> ClassInfo getClassInfo(Class<T> clazz) {
         ClassInfo classInfo = classInfoMap.get(clazz);
         if (classInfo == null) {
             classInfo = new ClassInfo(clazz);
         }
         return classInfo;
     }
+
 
     /**
      * 插入对应实体到数据库
@@ -216,14 +61,14 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    public synchronized <T extends IDColumn> long insert(T t) {
+    public final <T extends IDColumn> long insert(T t) {
         if (t == null) {
             return -1;
         }
         ClassInfo<T> classInfo = getClassInfo(t);
         String tableName = classInfo.getTableName();
         ContentValues values = classInfo.getContentValues(t);
-        if (values != null) {
+        if (values.size() > 0) {
             SQLiteDatabase database = getDatabase();
             database.beginTransaction();
             long id = database.insert(tableName, null, values);
@@ -242,7 +87,7 @@ public class DBProxy {
      * @param list
      * @param <T>
      */
-    public synchronized <T extends IDColumn> void insert(List<T> list) {
+    public final <T extends IDColumn> void insert(List<T> list) {
         if (isEmpty(list)) {
             return;
         }
@@ -251,7 +96,7 @@ public class DBProxy {
         database.beginTransaction();
         for (T t : list) {
             ContentValues values = classInfo.getContentValues(t);
-            if (values != null) {
+            if (values.size() > 0) {
                 long id = database.insert(classInfo.getTableName(), null, values);
                 t.setPrimaryKey(id);
             }
@@ -270,17 +115,17 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    public synchronized <T extends IDColumn> int update(T t, String where, String... args) {
+    public final <T extends IDColumn> int update(T t, String where, String... args) {
         if (t == null) {
             throw new NullPointerException("T对象不能为NULL！");
         }
-        if (where == null) {
+        if (where == null || where.trim().length() < 1) {
             throw new NullPointerException("缺少WHERE条件语句！");
         }
         ClassInfo<T> classInfo = getClassInfo(t);
         String tableName = classInfo.getTableName();
         ContentValues values = classInfo.getContentValues(t);
-        if (values == null) {
+        if (values.size() < 1) {
             return -1;
         }
         values.remove(IDColumn.PRIMARY_KEY);
@@ -300,14 +145,14 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    public synchronized <T extends IDColumn> int update(T t) {
-        long keyId;
+    public final <T extends IDColumn> int update(T t) {
+        long primaryKey;
         if (t == null) {
             throw new NullPointerException("T对象不能为NULL！");
-        } else if ((keyId = t.getPrimaryKey()) < 1) {
+        } else if ((primaryKey = t.getPrimaryKey()) < 1) {
             return -1;
         }
-        return update(t, IDColumn.PRIMARY_KEY + "=" + keyId);
+        return update(t, IDColumn.PRIMARY_KEY + "=" + primaryKey);
     }
 
     /**
@@ -318,7 +163,7 @@ public class DBProxy {
      * @param <T>
      * @return
      */
-    public synchronized <T extends IDColumn> int update(T t, long keyId) {
+    public final <T extends IDColumn> int update(T t, long keyId) {
         return update(t, IDColumn.PRIMARY_KEY + "=" + keyId);
     }
 
@@ -328,7 +173,7 @@ public class DBProxy {
      * @param list
      * @param <T>
      */
-    public synchronized <T extends IDColumn> void update(List<T> list) {
+    public final <T extends IDColumn> void update(List<T> list) {
         if (isEmpty(list)) {
             return;
         }
@@ -337,11 +182,11 @@ public class DBProxy {
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         for (T t : list) {
-            long keyId = t.getPrimaryKey();
+            long primaryKey = t.getPrimaryKey();
             ContentValues values = classInfo.getContentValues(t);
-            if (values != null && keyId > 0) {
+            if (values.size() > 0 && primaryKey > 0) {
                 values.remove(IDColumn.PRIMARY_KEY);
-                database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + keyId, null);
+                database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + primaryKey, null);
             }
         }
         database.setTransactionSuccessful();
@@ -349,14 +194,14 @@ public class DBProxy {
         close(database);
     }
 
-    public synchronized <T extends IDColumn> long insertOrUpdate(T t) {
+    public final <T extends IDColumn> long insertOrUpdate(T t) {
         if (t == null) {
             return -1;
         }
         ClassInfo<T> classInfo = getClassInfo(t);
         ContentValues values = classInfo.getContentValues(t);
         long rowId = -1;
-        if (values != null) {
+        if (values.size() > 0) {
             SQLiteDatabase database = getDatabase();
             if (t.getPrimaryKey() > 0) {
                 rowId = update(t);
@@ -373,7 +218,7 @@ public class DBProxy {
      * @param list
      * @param <T>
      */
-    public synchronized <T extends IDColumn> void insertOrUpdate(List<T> list) {
+    public final <T extends IDColumn> void insertOrUpdate(List<T> list) {
         if (isEmpty(list)) {
             return;
         }
@@ -383,10 +228,10 @@ public class DBProxy {
         database.beginTransaction();
         for (T t : list) {
             ContentValues values = classInfo.getContentValues(t);
-            if (values != null) {
-                long keyId = t.getPrimaryKey();
-                if (keyId > 0) {
-                    database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + keyId, null);
+            if (values.size() > 0) {
+                long primaryKey = t.getPrimaryKey();
+                if (primaryKey > 0) {
+                    database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + primaryKey, null);
                 } else {
                     database.insert(tableName, null, values);
                 }
@@ -402,7 +247,7 @@ public class DBProxy {
      *
      * @param sql
      */
-    public synchronized void execSQL(String... sql) {
+    public final void execSQL(String... sql) {
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         for (String s : sql) {
@@ -421,7 +266,7 @@ public class DBProxy {
      * @param args
      * @return
      */
-    public synchronized int delete(Class<?> clazz, String where, String... args) {
+    public final int delete(Class<?> clazz, String where, String... args) {
         String table = ClassInfo.conversionClassNameToTableName(clazz.getName());
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
@@ -436,11 +281,11 @@ public class DBProxy {
      * 根据主键删除数据库内容
      *
      * @param clazz
-     * @param keyId
+     * @param primaryKey
      * @return
      */
-    public synchronized int delete(Class<?> clazz, long keyId) {
-        return delete(clazz, IDColumn.PRIMARY_KEY + "=" + keyId);
+    public final int delete(Class<?> clazz, long primaryKey) {
+        return delete(clazz, IDColumn.PRIMARY_KEY + "=" + primaryKey);
     }
 
     /**
@@ -520,12 +365,12 @@ public class DBProxy {
      * 根据主键查询实体
      *
      * @param clazz
-     * @param keyId
+     * @param primaryKey
      * @param <T>
      * @return
      */
-    public <T extends IDColumn> T query(Class<T> clazz, long keyId) {
-        return query(clazz, IDColumn.PRIMARY_KEY + "=" + keyId);
+    public <T extends IDColumn> T query(Class<T> clazz, long primaryKey) {
+        return query(clazz, IDColumn.PRIMARY_KEY + "=" + primaryKey);
     }
 
     /**
@@ -634,7 +479,7 @@ public class DBProxy {
         if (cursor.moveToNext()) {
             map = new HashMap<String, Object>();
             for (String columnName : names) {
-                putMapKeyValue(cursor, columnName, map);
+                this.putMapKeyValue(cursor, columnName, map);
             }
         }
         close(cursor);
@@ -695,23 +540,20 @@ public class DBProxy {
         }
     }
 
-    private synchronized SQLiteDatabase getDatabase() {
-        closeIndex++;
-        if (helper != null) {
-            return helper.getReadableDatabase();
-        } else if (database != null) {
-            return database;
-        } else {
-            throw new NullPointerException("SQLiteOpenHelper is null or SQLiteDatabase is null, please set the value");
-        }
+    private SQLiteDatabase getDatabase() {
+        openCounting++;
+        Log.e("ESA", "open db count " + openCounting);
+        return getCreateDatabase();
     }
 
-    private synchronized void close(SQLiteDatabase database) {
-        closeIndex--;
-        if (closeIndex == 0) {
-            if (database != null && database != this.database && database.isOpen()) {
-                database.close();
-            }
+    public abstract SQLiteDatabase getCreateDatabase();
+
+    private void close(SQLiteDatabase database) {
+        openCounting--;
+        Log.e("ESA", "close db count " + openCounting);
+        if (openCounting == 0 && database != null && database.isOpen()) {
+            Log.e("ESA", "close db");
+            database.close();
         }
     }
 
@@ -727,4 +569,5 @@ public class DBProxy {
         }
         return false;
     }
+
 }
