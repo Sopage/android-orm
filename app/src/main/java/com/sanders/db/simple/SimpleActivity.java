@@ -16,6 +16,7 @@ import com.sanders.db.DBProxy;
 public class SimpleActivity extends Activity implements View.OnClickListener {
 
     public DBProxy db;
+    public DBProxy db2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,9 +30,14 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
         DBContext dbContext = new DBContext("database", 3, null);
         dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
         db = dbContext.buildDBProxy(this);
+        dbContext = new DBContext("database", 3, null);
+        dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
+        db2 = dbContext.buildDBProxy(this);
 
-        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
-        db = dbFile.buildDBProxy();
+//        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
+//        db = dbFile.buildDBProxy();
+//        dbFile = new DBFile("/mnt/sdcard/database.db");
+//        db2 = dbFile.buildDBProxy();
     }
 
     @Override
@@ -44,7 +50,8 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
                     public void run() {
                         int j = 100;
                         do {
-                            db.insert(new TableModel(Short.parseShort("1"), 1, 1l, 1d, 1f, true));
+                            long id = db2.insert(new TableModel(Short.parseShort("1"), 1, 1l, 1d, 1f, true));
+                            Log.e("ESA", "id=============" + id);
                             j--;
                         } while (j > 0);
                     }
