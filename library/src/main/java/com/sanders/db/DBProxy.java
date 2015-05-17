@@ -4,7 +4,6 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Build;
-import android.util.Log;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -542,7 +541,6 @@ public abstract class DBProxy {
 
     private SQLiteDatabase getDatabase() {
         openCounting++;
-        Log.e("ESA", "open db count " + openCounting);
         return getCreateDatabase();
     }
 
@@ -550,9 +548,7 @@ public abstract class DBProxy {
 
     private void close(SQLiteDatabase database) {
         openCounting--;
-        Log.e("ESA", "close db count " + openCounting);
         if (openCounting == 0 && database != null && database.isOpen()) {
-            Log.e("ESA", "close db");
             database.close();
         }
     }
