@@ -17,6 +17,16 @@ public class TableModel extends IDColumn {
     public TableModel() {
     }
 
+    public TableModel(long primaryKey, Short fieldShort, Integer fieldInt, Long fieldLong, Double fieldDouble, Float fieldFloat, Boolean fieldBoolean) {
+        setPrimaryKey(primaryKey);
+        this.fieldShort = fieldShort;
+        this.fieldInt = fieldInt;
+        this.fieldLong = fieldLong;
+        this.fieldDouble = fieldDouble;
+        this.fieldFloat = fieldFloat;
+        this.fieldBoolean = fieldBoolean;
+    }
+
     public TableModel(Short fieldShort, Integer fieldInt, Long fieldLong, Double fieldDouble, Float fieldFloat, Boolean fieldBoolean) {
         this.fieldShort = fieldShort;
         this.fieldInt = fieldInt;

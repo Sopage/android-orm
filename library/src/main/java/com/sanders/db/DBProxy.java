@@ -24,7 +24,7 @@ public abstract class DBProxy {
     /**
      * 用于缓存实体类Class和实体类详情
      */
-    protected final Map<Class, ClassInfo> mClassInfoMap = new HashMap<Class, ClassInfo>();
+    private final Map<Class, ClassInfo> mClassInfoMap = new HashMap<Class, ClassInfo>();
 
     /**
      * 获取一个实体类Class的详细信息并缓存
@@ -62,7 +62,7 @@ public abstract class DBProxy {
      */
     public final <T extends IDColumn> long insert(T t) {
         if (t == null) {
-            return -1;
+            throw new NullPointerException("插入对象为NULL");
         }
         ClassInfo<T> classInfo = getClassInfo(t);
         String tableName = classInfo.getTableName();
@@ -81,16 +81,36 @@ public abstract class DBProxy {
     }
 
     /**
+     * 插入数据
+     *
+     * @param tableName
+     * @param values
+     * @return
+     */
+    public final long insert(String tableName, ContentValues values) {
+        SQLiteDatabase database = getDatabase();
+        long id = -1;
+        database.beginTransaction();
+        if (values.size() > 0) {
+            id = database.insert(tableName, null, values);
+        }
+        database.setTransactionSuccessful();
+        database.endTransaction();
+        close(database);
+        return id;
+    }
+
+    /**
      * 批量插入对应实体类到数据库。建议集合不要太大，这是一次性事务
      *
      * @param list
      * @param <T>
      */
-    public final <T extends IDColumn> void insert(List<T> list) {
+    public final <T extends IDColumn> void insert(Collection<T> list) {
         if (isEmpty(list)) {
             return;
         }
-        ClassInfo<T> classInfo = getClassInfo(list.get(0));
+        ClassInfo<T> classInfo = getClassInfo(list.iterator().next());
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         for (T t : list) {
@@ -105,6 +125,7 @@ public abstract class DBProxy {
         close(database);
     }
 
+
     /**
      * 更具条件更新实体到数据库
      *
@@ -116,7 +137,7 @@ public abstract class DBProxy {
      */
     public final <T extends IDColumn> int update(T t, String where, String... args) {
         if (t == null) {
-            throw new NullPointerException("T对象不能为NULL！");
+            throw new NullPointerException("更新对象为NULL！");
         }
         if (where == null || where.trim().length() < 1) {
             throw new NullPointerException("缺少WHERE条件语句！");
@@ -138,6 +159,25 @@ public abstract class DBProxy {
     }
 
     /**
+     * 更新表数据
+     *
+     * @param tableName
+     * @param values
+     * @param where
+     * @param args
+     * @return
+     */
+    public final int update(String tableName, ContentValues values, String where, String... args) {
+        SQLiteDatabase database = getDatabase();
+        database.beginTransaction();
+        int row = database.update(tableName, values, where, args);
+        database.setTransactionSuccessful();
+        database.endTransaction();
+        close(database);
+        return row;
+    }
+
+    /**
      * 更具实体中的主键(_key_id)更新实体到数据库
      *
      * @param t
@@ -147,8 +187,8 @@ public abstract class DBProxy {
     public final <T extends IDColumn> int update(T t) {
         long primaryKey;
         if (t == null) {
-            throw new NullPointerException("T对象不能为NULL！");
-        } else if ((primaryKey = t.getPrimaryKey()) < 1) {
+            throw new NullPointerException("更新对象为NULL！");
+        } else if ((primaryKey = t.getPrimaryKey()) <= 0) {
             return -1;
         }
         return update(t, IDColumn.PRIMARY_KEY + "=" + primaryKey);
@@ -201,7 +241,6 @@ public abstract class DBProxy {
         ContentValues values = classInfo.getContentValues(t);
         long rowId = -1;
         if (values.size() > 0) {
-            SQLiteDatabase database = getDatabase();
             if (t.getPrimaryKey() > 0) {
                 rowId = update(t);
             } else {
@@ -267,13 +306,7 @@ public abstract class DBProxy {
      */
     public final int delete(Class<?> clazz, String where, String... args) {
         String table = ClassInfo.conversionClassNameToTableName(clazz.getName());
-        SQLiteDatabase database = getDatabase();
-        database.beginTransaction();
-        int row = database.delete(table, where, args);
-        database.setTransactionSuccessful();
-        database.endTransaction();
-        close(database);
-        return row;
+        return delete(table, where, args);
     }
 
     /**
@@ -288,6 +321,24 @@ public abstract class DBProxy {
     }
 
     /**
+     * 更具条件删除数据库内容
+     *
+     * @param tableName
+     * @param where
+     * @param args
+     * @return
+     */
+    public final int delete(String tableName, String where, String... args) {
+        SQLiteDatabase database = getDatabase();
+        database.beginTransaction();
+        int row = database.delete(tableName, where, args);
+        database.setTransactionSuccessful();
+        database.endTransaction();
+        close(database);
+        return row;
+    }
+
+    /**
      * 查询数量
      *
      * @param clazz
@@ -297,10 +348,22 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> long queryCount(Class<T> clazz, String where, String... args) {
-        SQLiteDatabase database = getDatabase();
         ClassInfo<T> classInfo = getClassInfo(clazz);
+        return queryCount(classInfo.getTableName(), where, args);
+    }
+
+    /**
+     * 查询数量
+     *
+     * @param tableName
+     * @param where
+     * @param args
+     * @return
+     */
+    public <T extends IDColumn> long queryCount(String tableName, String where, String... args) {
+        SQLiteDatabase database = getDatabase();
         StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.PRIMARY_KEY).append(") AS count FROM ");
-        sql.append(classInfo.getTableName());
+        sql.append(tableName);
         if (where != null && where.trim().length() > 0) {
             sql.append(" WHERE ").append(where);
         }
@@ -325,12 +388,24 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> long queryPrimaryKey(Class<T> clazz, String where, String... args) {
+        ClassInfo<T> classInfo = getClassInfo(clazz);
+        return queryPrimaryKey(classInfo.getTableName(), where, args);
+    }
+
+    /**
+     * 查询主键
+     *
+     * @param tableName
+     * @param where
+     * @param args
+     * @return
+     */
+    private long queryPrimaryKey(String tableName, String where, String... args) {
         if (where == null) {
             throw new NullPointerException("缺少WHERE条件语句！");
         }
-        ClassInfo<T> classInfo = getClassInfo(clazz);
         SQLiteDatabase database = getDatabase();
-        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_KEY).append(" FROM ").append(classInfo.getTableName()).append(" WHERE ").append(where);
+        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_KEY).append(" FROM ").append(tableName).append(" WHERE ").append(where);
         Cursor cursor = database.rawQuery(sql.toString(), args);
         long id = -1;
         if (cursor.moveToNext()) {
@@ -511,6 +586,12 @@ public abstract class DBProxy {
         return list;
     }
 
+    /**
+     * 封装内容到Map对象
+     * @param cursor
+     * @param columnName
+     * @param map
+     */
     private void putMapKeyValue(Cursor cursor, String columnName, Map<String, Object> map) {
         int columnIndex = cursor.getColumnIndex(columnName);
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
@@ -539,13 +620,25 @@ public abstract class DBProxy {
         }
     }
 
+    /**
+     * 拿到数据库操作类SQLiteDatabase并打开数据库计数加1
+     * @return
+     */
     private SQLiteDatabase getDatabase() {
         mOpenCount++;
         return getCreateDatabase();
     }
 
+    /**
+     * 获取数据可SQLiteDatabase，需要实现此方法
+     * @return
+     */
     public abstract SQLiteDatabase getCreateDatabase();
 
+    /**
+     * 关闭数据库SQLiteDatabase，打开数据库计数减1
+     * @param database
+     */
     private void close(SQLiteDatabase database) {
         mOpenCount--;
         if (mOpenCount == 0 && database != null && database.isOpen()) {
@@ -553,12 +646,21 @@ public abstract class DBProxy {
         }
     }
 
+    /**
+     * 关闭Cursor
+     * @param cursor
+     */
     private void close(Cursor cursor) {
         if (cursor != null && !cursor.isClosed()) {
             cursor.close();
         }
     }
 
+    /**
+     * 集合NULL判断
+     * @param collection
+     * @return
+     */
     private boolean isEmpty(Collection collection) {
         if (collection == null || collection.isEmpty()) {
             return true;
@@ -566,7 +668,24 @@ public abstract class DBProxy {
         return false;
     }
 
+    /**
+     * 返回当前数据库打开关闭计数
+     * @return
+     */
     public int getOpenCount() {
         return mOpenCount;
+    }
+
+    /**
+     * 转换Boolean值用于数据库查询
+     *
+     * @param b
+     * @return
+     */
+    public final String getBooleanValue(boolean b) {
+        if (b) {
+            return "1";
+        }
+        return "0";
     }
 }
