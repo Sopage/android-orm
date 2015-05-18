@@ -54,32 +54,43 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
         int viewId = v.getId();
         switch (viewId) {
             case R.id.btn_insert:
-                new Thread() {
-                    @Override
-                    public void run() {
-                        int j = 100;
-                        do {
-                            long id = db2.insert(new TableModel(Short.parseShort("1"), 1, 1l, 1d, 1f, true));
-                            Log.e("ESA", "id=============" + id);
-                            j--;
-                        } while (j > 0);
-                    }
-                }.start();
-                for (int i = 0; i < 20; i++) {
+                for (int i = 0; i < 10; i++) {
                     new Thread() {
                         @Override
                         public void run() {
                             int j = 100;
                             do {
                                 long count = db.queryCount(TableModel.class, null);
-                                Log.e("ESA", "count=============" + count);
+                                Log.e("ESA", "query count --------------" + count);
                                 j--;
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            } while (j > 0);
+                        }
+                    }.start();
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            int j = 100;
+                            do {
+                                long id = db.insert(new TableModel(Short.parseShort("1"), 1, 1l, 1d, 1f, true));
+                                Log.e("ESA", "insert id++++++++++++" + id);
+                                j--;
+                                try {
+                                    Thread.sleep(10);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
                             } while (j > 0);
                         }
                     }.start();
                 }
                 break;
             case R.id.btn_insert_list:
+                Log.e("ESA", "db count=" + db.getOpenCount() + "    db count=" + db.getOpenCount());
                 break;
             case R.id.btn_update:
                 break;
