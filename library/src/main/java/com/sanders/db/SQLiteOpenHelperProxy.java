@@ -42,13 +42,9 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         Iterator<Class> iterator = mClasses.iterator();
         while (iterator.hasNext()) {
-            try {
-                ClassInfo classInfo = mProxy.getClassInfo(iterator.next());
-                String sql = classInfo.getCreateTableSql();
-                db.execSQL(sql);
-            } catch (NoSuchFieldException e) {
-                e.printStackTrace();
-            }
+            ClassInfo classInfo = mProxy.getClassInfo(iterator.next());
+            String sql = classInfo.getCreateTableSql();
+            db.execSQL(sql);
         }
     }
 

@@ -19,9 +19,6 @@ public class ClassInfo<T extends IDColumn> {
     private String mTableName;
     private Map<String, Field> mFieldMap = new LinkedHashMap<String, Field>();
 
-    private ClassInfo() {
-    }
-
     public ClassInfo(Class<T> clazz) {
         this.mClass = clazz;
         this.mTableName = conversionClassNameToTableName(clazz.getName());
@@ -62,7 +59,6 @@ public class ClassInfo<T extends IDColumn> {
                 putFieldValue(key, entry.getValue(), t, values);
             } catch (IllegalAccessException e) {
                 e.printStackTrace();
-                return null;
             }
         }
         return values;
@@ -119,7 +115,7 @@ public class ClassInfo<T extends IDColumn> {
         return list;
     }
 
-    public String getCreateTableSql() throws NoSuchFieldException {
+    public String getCreateTableSql() {
         StringBuilder sql = new StringBuilder();
         sql.append("CREATE TABLE IF NOT EXISTS `").append(this.mTableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT");
         for (Map.Entry<String, Field> entry : this.mFieldMap.entrySet()) {
