@@ -3,7 +3,6 @@ package com.sanders.db.simple;
 import android.app.Activity;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.LinearLayout;
 
@@ -12,11 +11,6 @@ import com.sanders.db.DBContext;
 import com.sanders.db.DBFile;
 import com.sanders.db.DBProxy;
 import com.sanders.db.OnDBUpgrade;
-
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by sanders on 15/3/27.
@@ -49,11 +43,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
 
         DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
         db = dbFile.buildDBProxy();
-        try {
-            db.execSQL(new ClassInfo(TableModel.class).getCreateTableSql());
-        } catch (NoSuchFieldException e) {
-            e.printStackTrace();
-        }
+        db.execSQL(new ClassInfo(TableModel.class).getCreateTableSql());
 //        dbFile = new DBFile(new File("/mnt/sdcard/database.db"));
 //        db2 = dbFile.buildDBProxy();
     }
