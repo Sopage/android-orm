@@ -400,7 +400,7 @@ public abstract class DBProxy {
      * @param args
      * @return
      */
-    private long queryPrimaryKey(String tableName, String where, String... args) {
+    public long queryPrimaryKey(String tableName, String where, String... args) {
         if (where == null) {
             throw new NullPointerException("缺少WHERE条件语句！");
         }

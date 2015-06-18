@@ -40,20 +40,18 @@ public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        Iterator<Class> iterator = mClasses.iterator();
-        while (iterator.hasNext()) {
-            ClassInfo classInfo = mProxy.getClassInfo(iterator.next());
+        for(Class clazz : mClasses) {
+            ClassInfo classInfo = mProxy.getClassInfo(clazz);
             String sql = classInfo.getCreateTableSql();
             db.execSQL(sql);
         }
     }
 
     private void upgrade(SQLiteDatabase db, int oldVersion) {
-        Iterator<Class> iterator = mClasses.iterator();
         List<String> sqlList = new ArrayList<String>();
-        while (iterator.hasNext()) {
+        for(Class clazz : mClasses){
             sqlList.clear();
-            ClassInfo classInfo = mProxy.getClassInfo(iterator.next());
+            ClassInfo classInfo = mProxy.getClassInfo(clazz);
             String tableName = classInfo.getTableName();
             Cursor cursor = db.rawQuery("PRAGMA table_info(`" + tableName + "`)", null);//查询表结构
             if (cursor.getCount() < 1) {
