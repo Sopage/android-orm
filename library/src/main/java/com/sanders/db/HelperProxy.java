@@ -16,13 +16,13 @@ import java.util.Map;
 /**
  * Created by sanders on 15/3/30.
  */
-public class SQLiteOpenHelperProxy extends SQLiteOpenHelper {
+public class HelperProxy extends SQLiteOpenHelper {
 
     private Collection<Class> mClasses;
     private OnDBUpgrade mUpgrade;
     private DBProxy mProxy;
 
-    public SQLiteOpenHelperProxy(Context context, String dbName, int dbVersion) {
+    public HelperProxy(Context context, String dbName, int dbVersion) {
         super(context, dbName, null, dbVersion);
     }
 

@@ -456,7 +456,7 @@ public abstract class DBProxy {
      * @param <T>
      * @return
      */
-    public <T extends IDColumn> T querySql(Class<T> clazz, String sql, String... args) {
+    public <T extends IDColumn> T queryBySql(Class<T> clazz, String sql, String... args) {
         SQLiteDatabase database = getDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         ClassInfo<T> classInfo = getClassInfo(clazz);
@@ -475,7 +475,7 @@ public abstract class DBProxy {
      * @param <T>
      * @return
      */
-    public <T extends IDColumn> List<T> querySqlList(Class<T> clazz, String sql, String... args) {
+    public <T extends IDColumn> List<T> queryListBySql(Class<T> clazz, String sql, String... args) {
         SQLiteDatabase database = getDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         ClassInfo<T> classInfo = getClassInfo(clazz);
@@ -569,7 +569,7 @@ public abstract class DBProxy {
      * @param args
      * @return
      */
-    public List<Map<String, Object>> queryList(String sql, String... args) {
+    public List<Map<String, Object>> queryListBySql(String sql, String... args) {
         SQLiteDatabase database = getDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         String[] names = cursor.getColumnNames();

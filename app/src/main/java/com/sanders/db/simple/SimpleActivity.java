@@ -8,6 +8,7 @@ import android.widget.LinearLayout;
 
 import com.sanders.db.ClassInfo;
 import com.sanders.db.DBContext;
+import com.sanders.db.DBContextUse;
 import com.sanders.db.DBFile;
 import com.sanders.db.DBProxy;
 import com.sanders.db.OnDBUpgrade;
@@ -29,21 +30,24 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
             linearLayout.getChildAt(i).setOnClickListener(this);
         }
 
-        DBContext dbContext = new DBContext("database", 3, new OnDBUpgrade() {
-            @Override
-            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-                return false;
-            }
-        });
+//        DBContext dbContext = new DBContext("database", 3, new OnDBUpgrade() {
+//            @Override
+//            public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+//                return false;
+//            }
+//        });
 //        dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
 //        db = dbContext.buildDBProxy(this);
 //        dbContext = new DBContext("database", 3, null);
 //        dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
 //        db2 = dbContext.buildDBProxy(this);
 
-        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
-        db = dbFile.buildDBProxy();
-        db.execSQL(new ClassInfo(TableModel.class).getCreateTableSql());
+        DBContextUse dbContextUse = new DBContextUse("dbdbdbdbdbd", 1, null);
+        dbContextUse.addSql(new ClassInfo(TableBean.class).getCreateTableSql()).addSql(new ClassInfo(TableModel.class).getCreateTableSql());
+        db = dbContextUse.buildDBProxy(getApplicationContext());
+//        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
+//        db = dbFile.buildDBProxy();
+//        db.execSQL(new ClassInfo(TableModel.class).getCreateTableSql());
 //        dbFile = new DBFile(new File("/mnt/sdcard/database.db"));
 //        db2 = dbFile.buildDBProxy();
     }
@@ -75,7 +79,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
 //                        public void run() {
 //                            int j = 100;
 //                            do {
-//                                long id = db.insert(new TableModel(Short.parseShort("1"), 1, 1l, 1d, 1f, true));
+                                long id = db.insert(new TableModel(Short.parseShort("1"), 1, 1l, 1d, 1f, true));
 //                                Log.e("ESA", "insert id++++++++++++" + id);
 //                                j--;
 //                                try {
