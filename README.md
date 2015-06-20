@@ -30,6 +30,7 @@
 | 外部数据库 | 不支持自动建表和升级。另外主键名称必须是`primary_key` |
 
 ##### 系统创建表
+	//使用DBContext自动化创建表，每个表对应一个继承IDColumn.java类的POJO实体
 	DBContext dbContext = new DBContext("database", 1, new OnDBUpgrade() {
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
@@ -39,6 +40,12 @@
         });
 	dbContext.addTableBean(TableModel.class).addTableBean(TableBean.class);
 	DBProxy db = dbContext.buildDBProxy(this);
+	
+	//使用DBContextUse创建数据库
+	DBContextUse dbContextUse = new DBContextUse("dbdbdbdbdbd", 1, null);
+    dbContextUse.addSql(create table sql).addSql(create table sql);
+    DBProxy db = dbContextUse.buildDBProxy(getApplicationContext());
 ##### 设置外部数据库，主键名称必须是`primary_key`
 	DBFile dbFile = new DBFile(file path or File);
 	DBProxy db = dbFile.buildDBProxy();
+##### `DBProxy.java`类包涵了所有数据库操作
