@@ -3,7 +3,7 @@
 ## 使用方法
 <b>Android Studio引用方式:</b>
 
-`compile 'com.github.supersanders:cube-orm:3.0@aar'`
+`compile 'com.github.supersanders:cube-orm:3.1@aar'`
 
 <b>混淆配置:</b>
 
@@ -31,7 +31,7 @@
 
 ##### 系统创建表
 	//使用DBContext自动化创建表，每个表对应一个继承IDColumn.java类的POJO实体
-	DBContext dbContext = new DBContext("database", 1, new OnDBUpgrade() {
+	DBContext dbContext = new DBContext("数据库名称", 数据库名称, new OnDBUpgrade() {
             @Override
             public boolean onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
             	//return false 自己处理升级，return true 自动处理
@@ -42,7 +42,7 @@
 	DBProxy db = dbContext.buildDBProxy(this);
 	
 	//使用DBContextUse创建数据库
-	DBContextUse dbContextUse = new DBContextUse("dbdbdbdbdbd", 1, null);
+	DBContextUse dbContextUse = new DBContextUse("数据库名称", 数据库版本, OnDBUpgrade);
     dbContextUse.addSql(create table sql).addSql(create table sql);
     DBProxy db = dbContextUse.buildDBProxy(getApplicationContext());
 ##### 设置外部数据库，主键名称必须是`primary_key`
