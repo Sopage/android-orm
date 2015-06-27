@@ -1,4 +1,4 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import java.io.Serializable;
 
@@ -11,18 +11,18 @@ public abstract class IDColumn implements Serializable {
     /**
      * 主键ID 自增长类型
      */
-    public static final String PRIMARY_KEY = "primary_key";
+    public static final String PRIMARY_ID = "_id";
 
     /**
      * 主键ID 自增长类型
      */
-    private long primary_key;
+    private long _id;
 
-    public long getPrimaryKey() {
-        return primary_key;
+    public long getPrimaryId() {
+        return _id;
     }
 
-    public void setPrimaryKey(long primary_key) {
-        this.primary_key = primary_key;
+    public void setPrimaryId(long id) {
+        this._id = id;
     }
 }

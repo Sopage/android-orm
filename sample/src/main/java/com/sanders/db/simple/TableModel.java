@@ -1,6 +1,6 @@
 package com.sanders.db.simple;
 
-import com.sanders.db.IDColumn;
+import android.sqlite.orm.IDColumn;
 
 /**
  * Created by sanders on 15/3/28.
@@ -18,7 +18,7 @@ public class TableModel extends IDColumn {
     }
 
     public TableModel(long primaryKey, Short fieldShort, Integer fieldInt, Long fieldLong, Double fieldDouble, Float fieldFloat, Boolean fieldBoolean) {
-        setPrimaryKey(primaryKey);
+        setPrimaryId(primaryKey);
         this.fieldShort = fieldShort;
         this.fieldInt = fieldInt;
         this.fieldLong = fieldLong;

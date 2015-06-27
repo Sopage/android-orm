@@ -1,4 +1,4 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -14,7 +14,7 @@ public class DBContext {
     private String name;
     private int version;
     private OnDBUpgrade upgrade;
-    private Collection<Class> tables = new LinkedHashSet<Class>();
+    private Collection<Class> tableBeans = new LinkedHashSet<Class>();
 
     public DBContext(String name, int version, OnDBUpgrade upgrade) {
         this.name = name;
@@ -23,17 +23,13 @@ public class DBContext {
     }
 
     public DBContext addTableBean(Class clazz) {
-        this.tables.add(clazz);
+        this.tableBeans.add(clazz);
         return this;
     }
 
-    public void setTables(Collection<Class> tables) {
-        this.tables.addAll(tables);
-    }
-
     public DBProxy buildDBProxy(Context context) {
-        final HelperProxy helper = new HelperProxy(context, name, version);
-        helper.addTableBeans(tables);
+        final OpenHelperProxy helper = new OpenHelperProxy(context, name, version);
+        helper.addTableBeans(tableBeans);
         helper.setOnUpgrade(upgrade);
         DBProxy proxy = new DBProxy() {
             @Override

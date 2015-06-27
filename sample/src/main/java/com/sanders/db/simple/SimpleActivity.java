@@ -6,12 +6,12 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.LinearLayout;
 
-import com.sanders.db.ClassInfo;
-import com.sanders.db.DBContext;
-import com.sanders.db.DBContextUse;
-import com.sanders.db.DBFile;
-import com.sanders.db.DBProxy;
-import com.sanders.db.OnDBUpgrade;
+import android.sqlite.orm.ClassInfo;
+import android.sqlite.orm.DBContext;
+import android.sqlite.orm.DBContextUse;
+import android.sqlite.orm.DBFile;
+import android.sqlite.orm.DBProxy;
+import android.sqlite.orm.OnDBUpgrade;
 
 /**
  * Created by sanders on 15/3/27.
@@ -43,7 +43,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
 //        db2 = dbContext.buildDBProxy(this);
 
         DBContextUse dbContextUse = new DBContextUse("dbdbdbdbdbd", 1, null);
-        dbContextUse.addSql(new ClassInfo(TableBean.class).getCreateTableSql()).addSql(new ClassInfo(TableModel.class).getCreateTableSql());
+        dbContextUse.addCreateTableSql(new ClassInfo(TableBean.class).getCreateTableSql()).addCreateTableSql(new ClassInfo(TableModel.class).getCreateTableSql());
         db = dbContextUse.buildDBProxy(getApplicationContext());
 //        DBFile dbFile = new DBFile("/mnt/sdcard/database.db");
 //        db = dbFile.buildDBProxy();

@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 10
+    compileSdkVersion 15
     buildToolsVersion '22.0.1'
 
     defaultConfig {
         applicationId "com.sanders.db.simple"
-        minSdkVersion 8
+        minSdkVersion 15
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"

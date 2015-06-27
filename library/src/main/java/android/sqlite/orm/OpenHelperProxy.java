@@ -1,4 +1,4 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -9,20 +9,19 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
  * Created by sanders on 15/3/30.
  */
-public class HelperProxy extends SQLiteOpenHelper {
+public class OpenHelperProxy extends SQLiteOpenHelper {
 
     private Collection<Class> mClasses;
     private OnDBUpgrade mUpgrade;
     private DBProxy mProxy;
 
-    public HelperProxy(Context context, String dbName, int dbVersion) {
+    public OpenHelperProxy(Context context, String dbName, int dbVersion) {
         super(context, dbName, null, dbVersion);
     }
 
@@ -40,7 +39,7 @@ public class HelperProxy extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        for(Class clazz : mClasses) {
+        for (Class clazz : mClasses) {
             ClassInfo classInfo = mProxy.getClassInfo(clazz);
             String sql = classInfo.getCreateTableSql();
             db.execSQL(sql);
@@ -49,7 +48,7 @@ public class HelperProxy extends SQLiteOpenHelper {
 
     private void upgrade(SQLiteDatabase db, int oldVersion) {
         List<String> sqlList = new ArrayList<String>();
-        for(Class clazz : mClasses){
+        for (Class clazz : mClasses) {
             sqlList.clear();
             ClassInfo classInfo = mProxy.getClassInfo(clazz);
             String tableName = classInfo.getTableName();

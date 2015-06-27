@@ -2,10 +2,10 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven'
 apply plugin: 'signing'
 android {
-    compileSdkVersion 16
+    compileSdkVersion 15
     buildToolsVersion "22.0.1"
     defaultConfig {
-        minSdkVersion 8
+        minSdkVersion 15
         targetSdkVersion 22
         versionCode 1
         versionName "1.0"

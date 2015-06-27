@@ -1,4 +1,4 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -18,17 +18,17 @@ public class OpenHelper extends SQLiteOpenHelper {
         super(context, name, null, version);
     }
 
-    public void setSqlCollection(Collection<String> sql){
+    public void addCreateTableSqlList(Collection<String> sql) {
         this.mSql = sql;
     }
 
-    public void setOnUpgrade(OnDBUpgrade upgrade){
+    public void setOnUpgrade(OnDBUpgrade upgrade) {
         this.mUpgrade = upgrade;
     }
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        for(String sql : mSql){
+        for (String sql : mSql) {
             db.execSQL(sql);
         }
     }

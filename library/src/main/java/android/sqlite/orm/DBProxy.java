@@ -1,9 +1,8 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.os.Build;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -71,7 +70,7 @@ public abstract class DBProxy {
             SQLiteDatabase database = getDatabase();
             database.beginTransaction();
             long id = database.insert(tableName, null, values);
-            t.setPrimaryKey(id);
+            t.setPrimaryId(id);
             database.setTransactionSuccessful();
             database.endTransaction();
             close(database);
@@ -117,7 +116,7 @@ public abstract class DBProxy {
             ContentValues values = classInfo.getContentValues(t);
             if (values.size() > 0) {
                 long id = database.insert(classInfo.getTableName(), null, values);
-                t.setPrimaryKey(id);
+                t.setPrimaryId(id);
             }
         }
         database.setTransactionSuccessful();
@@ -148,7 +147,7 @@ public abstract class DBProxy {
         if (values.size() < 1) {
             return -1;
         }
-        values.remove(IDColumn.PRIMARY_KEY);
+        values.remove(IDColumn.PRIMARY_ID);
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         int row = database.update(tableName, values, where, args);
@@ -188,10 +187,10 @@ public abstract class DBProxy {
         long primaryKey;
         if (t == null) {
             throw new NullPointerException("更新对象为NULL！");
-        } else if ((primaryKey = t.getPrimaryKey()) <= 0) {
+        } else if ((primaryKey = t.getPrimaryId()) <= 0) {
             return -1;
         }
-        return update(t, IDColumn.PRIMARY_KEY + "=" + primaryKey);
+        return update(t, IDColumn.PRIMARY_ID + "=" + primaryKey);
     }
 
     /**
@@ -203,7 +202,7 @@ public abstract class DBProxy {
      * @return
      */
     public final <T extends IDColumn> int update(T t, long keyId) {
-        return update(t, IDColumn.PRIMARY_KEY + "=" + keyId);
+        return update(t, IDColumn.PRIMARY_ID + "=" + keyId);
     }
 
     /**
@@ -221,11 +220,11 @@ public abstract class DBProxy {
         SQLiteDatabase database = getDatabase();
         database.beginTransaction();
         for (T t : list) {
-            long primaryKey = t.getPrimaryKey();
+            long primaryKey = t.getPrimaryId();
             ContentValues values = classInfo.getContentValues(t);
             if (values.size() > 0 && primaryKey > 0) {
-                values.remove(IDColumn.PRIMARY_KEY);
-                database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + primaryKey, null);
+                values.remove(IDColumn.PRIMARY_ID);
+                database.update(tableName, values, IDColumn.PRIMARY_ID + "=" + primaryKey, null);
             }
         }
         database.setTransactionSuccessful();
@@ -241,7 +240,7 @@ public abstract class DBProxy {
         ContentValues values = classInfo.getContentValues(t);
         long rowId = -1;
         if (values.size() > 0) {
-            if (t.getPrimaryKey() > 0) {
+            if (t.getPrimaryId() > 0) {
                 rowId = update(t);
             } else {
                 rowId = insert(t);
@@ -267,9 +266,9 @@ public abstract class DBProxy {
         for (T t : list) {
             ContentValues values = classInfo.getContentValues(t);
             if (values.size() > 0) {
-                long primaryKey = t.getPrimaryKey();
+                long primaryKey = t.getPrimaryId();
                 if (primaryKey > 0) {
-                    database.update(tableName, values, IDColumn.PRIMARY_KEY + "=" + primaryKey, null);
+                    database.update(tableName, values, IDColumn.PRIMARY_ID + "=" + primaryKey, null);
                 } else {
                     database.insert(tableName, null, values);
                 }
@@ -317,7 +316,7 @@ public abstract class DBProxy {
      * @return
      */
     public final int delete(Class<?> clazz, long primaryKey) {
-        return delete(clazz, IDColumn.PRIMARY_KEY + "=" + primaryKey);
+        return delete(clazz, IDColumn.PRIMARY_ID + "=" + primaryKey);
     }
 
     /**
@@ -362,7 +361,7 @@ public abstract class DBProxy {
      */
     public <T extends IDColumn> long queryCount(String tableName, String where, String... args) {
         SQLiteDatabase database = getDatabase();
-        StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.PRIMARY_KEY).append(") AS count FROM ");
+        StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.PRIMARY_ID).append(") AS count FROM ");
         sql.append(tableName);
         if (where != null && where.trim().length() > 0) {
             sql.append(" WHERE ").append(where);
@@ -405,7 +404,7 @@ public abstract class DBProxy {
             throw new NullPointerException("缺少WHERE条件语句！");
         }
         SQLiteDatabase database = getDatabase();
-        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_KEY).append(" FROM ").append(tableName).append(" WHERE ").append(where);
+        StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_ID).append(" FROM ").append(tableName).append(" WHERE ").append(where);
         Cursor cursor = database.rawQuery(sql.toString(), args);
         long id = -1;
         if (cursor.moveToNext()) {
@@ -444,7 +443,7 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> T query(Class<T> clazz, long primaryKey) {
-        return query(clazz, IDColumn.PRIMARY_KEY + "=" + primaryKey);
+        return query(clazz, IDColumn.PRIMARY_ID + "=" + primaryKey);
     }
 
     /**
@@ -588,40 +587,38 @@ public abstract class DBProxy {
 
     /**
      * 封装内容到Map对象
+     *
      * @param cursor
      * @param columnName
      * @param map
      */
     private void putMapKeyValue(Cursor cursor, String columnName, Map<String, Object> map) {
         int columnIndex = cursor.getColumnIndex(columnName);
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
-            map.put(columnName, cursor.getString(columnIndex));
-        } else {
-            int type = cursor.getType(columnIndex);
-            switch (type) {
-                case Cursor.FIELD_TYPE_INTEGER:
-                    map.put(columnName, cursor.getLong(columnIndex));
-                    break;
-                case Cursor.FIELD_TYPE_STRING:
-                    map.put(columnName, cursor.getString(columnIndex));
-                    break;
-                case Cursor.FIELD_TYPE_FLOAT:
-                    map.put(columnName, cursor.getFloat(columnIndex));
-                    break;
-                case Cursor.FIELD_TYPE_BLOB:
-                    map.put(columnName, cursor.getBlob(columnIndex));
-                    break;
-                case Cursor.FIELD_TYPE_NULL:
-                    map.put(columnName, cursor.getString(columnIndex));
-                    break;
-                default:
-                    break;
-            }
+        int type = cursor.getType(columnIndex);
+        switch (type) {
+            case Cursor.FIELD_TYPE_INTEGER:
+                map.put(columnName, cursor.getLong(columnIndex));
+                break;
+            case Cursor.FIELD_TYPE_STRING:
+                map.put(columnName, cursor.getString(columnIndex));
+                break;
+            case Cursor.FIELD_TYPE_FLOAT:
+                map.put(columnName, cursor.getFloat(columnIndex));
+                break;
+            case Cursor.FIELD_TYPE_BLOB:
+                map.put(columnName, cursor.getBlob(columnIndex));
+                break;
+            case Cursor.FIELD_TYPE_NULL:
+                map.put(columnName, cursor.getString(columnIndex));
+                break;
+            default:
+                break;
         }
     }
 
     /**
      * 拿到数据库操作类SQLiteDatabase并打开数据库计数加1
+     *
      * @return
      */
     private SQLiteDatabase getDatabase() {
@@ -631,12 +628,14 @@ public abstract class DBProxy {
 
     /**
      * 获取数据可SQLiteDatabase，需要实现此方法
+     *
      * @return
      */
     public abstract SQLiteDatabase getCreateDatabase();
 
     /**
      * 关闭数据库SQLiteDatabase，打开数据库计数减1
+     *
      * @param database
      */
     private void close(SQLiteDatabase database) {
@@ -648,6 +647,7 @@ public abstract class DBProxy {
 
     /**
      * 关闭Cursor
+     *
      * @param cursor
      */
     private void close(Cursor cursor) {
@@ -658,6 +658,7 @@ public abstract class DBProxy {
 
     /**
      * 集合NULL判断
+     *
      * @param collection
      * @return
      */
@@ -670,6 +671,7 @@ public abstract class DBProxy {
 
     /**
      * 返回当前数据库打开关闭计数
+     *
      * @return
      */
     public int getOpenCount() {

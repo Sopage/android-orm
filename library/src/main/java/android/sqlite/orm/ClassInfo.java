@@ -1,4 +1,4 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -23,20 +23,20 @@ public class ClassInfo<T extends IDColumn> {
         this.mClass = clazz;
         this.mTableName = conversionClassNameToTableName(clazz.getName());
         try {
-            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_KEY);
+            Field superField = clazz.getSuperclass().getDeclaredField(IDColumn.PRIMARY_ID);
             superField.setAccessible(true);
-            mFieldMap.put(IDColumn.PRIMARY_KEY, superField);
-            Field[] fields = clazz.getDeclaredFields();
-            for (Field field : fields) {
-                int modifiers = field.getModifiers();
-                if (modifiers == 25 || modifiers == 26 || modifiers == 28) {
-                    continue;
-                }
-                field.setAccessible(true);
-                mFieldMap.put(conversionJavaFieldNameToDBFieldName(field.getName()), field);
-            }
+            mFieldMap.put(IDColumn.PRIMARY_ID, superField);
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
+        }
+        Field[] fields = clazz.getDeclaredFields();
+        for (Field field : fields) {
+            int modifiers = field.getModifiers();
+            if (modifiers == 25 || modifiers == 26 || modifiers == 28) {
+                continue;
+            }
+            field.setAccessible(true);
+            mFieldMap.put(conversionJavaFieldNameToDBFieldName(field.getName()), field);
         }
     }
 
@@ -53,7 +53,7 @@ public class ClassInfo<T extends IDColumn> {
         for (Map.Entry<String, Field> entry : mFieldMap.entrySet()) {
             try {
                 String key = entry.getKey();
-                if (IDColumn.PRIMARY_KEY.equals(key)) {
+                if (IDColumn.PRIMARY_ID.equals(key)) {
                     continue;
                 }
                 putFieldValue(key, entry.getValue(), t, values);
@@ -72,8 +72,8 @@ public class ClassInfo<T extends IDColumn> {
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
-                    if (IDColumn.PRIMARY_KEY.equals(columnName)) {
-                        field = mFieldMap.get(IDColumn.PRIMARY_KEY);
+                    if (IDColumn.PRIMARY_ID.equals(columnName)) {
+                        field = mFieldMap.get(IDColumn.PRIMARY_ID);
                     } else {
                         field = mFieldMap.get(columnName);
                     }
@@ -98,8 +98,8 @@ public class ClassInfo<T extends IDColumn> {
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
                     Field field;
-                    if (IDColumn.PRIMARY_KEY.equals(columnName)) {
-                        field = mFieldMap.get(IDColumn.PRIMARY_KEY);
+                    if (IDColumn.PRIMARY_ID.equals(columnName)) {
+                        field = mFieldMap.get(IDColumn.PRIMARY_ID);
                     } else {
                         field = mFieldMap.get(columnName);
                     }
@@ -117,10 +117,10 @@ public class ClassInfo<T extends IDColumn> {
 
     public String getCreateTableSql() {
         StringBuilder sql = new StringBuilder();
-        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.mTableName).append("` (`").append(IDColumn.PRIMARY_KEY).append("` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT");
+        sql.append("CREATE TABLE IF NOT EXISTS `").append(this.mTableName).append("` (`").append(IDColumn.PRIMARY_ID).append("` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT");
         for (Map.Entry<String, Field> entry : this.mFieldMap.entrySet()) {
             String javaField = entry.getKey();
-            if (IDColumn.PRIMARY_KEY.equals(javaField)) {
+            if (IDColumn.PRIMARY_ID.equals(javaField)) {
                 continue;
             }
             String tableField = conversionJavaFieldNameToDBFieldName(javaField);

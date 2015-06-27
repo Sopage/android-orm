@@ -1,4 +1,4 @@
-package com.sanders.db;
+package android.sqlite.orm;
 
 import android.database.sqlite.SQLiteDatabase;
 

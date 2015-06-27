@@ -1,6 +1,6 @@
 package com.sanders.db.simple;
 
-import com.sanders.db.IDColumn;
+import android.sqlite.orm.IDColumn;
 
 import java.util.Date;
 
