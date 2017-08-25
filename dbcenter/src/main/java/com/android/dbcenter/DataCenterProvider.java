@@ -45,7 +45,9 @@ public class DataCenterProvider extends ContentProvider {
             String table = uri.getQueryParameter("table");
             SQLiteDatabase database = dbCenter.getSQLiteDatabase();
             if (database != null && database.isOpen()) {
-                if(database.insert(table, null, values) > 0){
+                long i = database.insert(table, null, values);
+                if (i > 0) {
+                    getContext().getContentResolver().notifyChange(uri, null);
                     return uri;
                 }
             }
@@ -59,7 +61,11 @@ public class DataCenterProvider extends ContentProvider {
             String table = uri.getQueryParameter("table");
             SQLiteDatabase database = dbCenter.getSQLiteDatabase();
             if (database != null && database.isOpen()) {
-                return database.delete(table, selection, selectionArgs);
+                int i = database.delete(table, selection, selectionArgs);
+                if(i > 0){
+                    getContext().getContentResolver().notifyChange(uri, null);
+                    return i;
+                }
             }
         }
         return -1;
@@ -71,11 +77,16 @@ public class DataCenterProvider extends ContentProvider {
             String table = uri.getQueryParameter("table");
             SQLiteDatabase database = dbCenter.getSQLiteDatabase();
             if (database != null && database.isOpen()) {
-                database.update(table, values, selection, selectionArgs);
+                int i = database.update(table, values, selection, selectionArgs);
+                if (i > 0) {
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
+                return i;
             }
         } else if (uriCenter.isSwitchURI(uri)) {
             String name = uri.getQueryParameter("database");
             if (dbCenter.doSwitch(getContext(), name + ".db")) {
+                getContext().getContentResolver().notifyChange(uri, null);
                 return 1;
             }
         }
