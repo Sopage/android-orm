@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.android.dbcenter">
+
+    <application>
+        <provider
+            android:authorities="${applicationId}.DataCenterProvider"
+            android:name="com.android.dbcenter.DataCenterProvider"
+            android:process=":center"
+            android:multiprocess="false"/>
+    </application>
+
+</manifest>

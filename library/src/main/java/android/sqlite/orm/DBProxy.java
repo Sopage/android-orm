@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Created by sanders on 15/5/17.
@@ -18,7 +19,7 @@ public abstract class DBProxy {
     /**
      * 数据库操作计数，防止异常关闭问题
      */
-    private int mOpenCount = 0;
+    private AtomicInteger atomicInteger = new AtomicInteger();
 
     /**
      * 用于缓存实体类Class和实体类详情
@@ -67,7 +68,7 @@ public abstract class DBProxy {
         String tableName = classInfo.getTableName();
         ContentValues values = classInfo.getContentValues(t);
         if (values.size() > 0) {
-            SQLiteDatabase database = getDatabase();
+            SQLiteDatabase database = openDatabase();
             database.beginTransaction();
             long id = database.insert(tableName, null, values);
             t.setPrimaryId(id);
@@ -87,7 +88,7 @@ public abstract class DBProxy {
      * @return
      */
     public final long insert(String tableName, ContentValues values) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         long id = -1;
         database.beginTransaction();
         if (values.size() > 0) {
@@ -110,7 +111,7 @@ public abstract class DBProxy {
             return;
         }
         ClassInfo<T> classInfo = getClassInfo(list.iterator().next());
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         for (T t : list) {
             ContentValues values = classInfo.getContentValues(t);
@@ -148,7 +149,7 @@ public abstract class DBProxy {
             return -1;
         }
         values.remove(IDColumn.PRIMARY_ID);
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         int row = database.update(tableName, values, where, args);
         database.setTransactionSuccessful();
@@ -167,7 +168,7 @@ public abstract class DBProxy {
      * @return
      */
     public final int update(String tableName, ContentValues values, String where, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         int row = database.update(tableName, values, where, args);
         database.setTransactionSuccessful();
@@ -217,7 +218,7 @@ public abstract class DBProxy {
         }
         ClassInfo<T> classInfo = getClassInfo(list.get(0));
         String tableName = classInfo.getTableName();
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         for (T t : list) {
             long primaryKey = t.getPrimaryId();
@@ -261,7 +262,7 @@ public abstract class DBProxy {
         }
         ClassInfo<T> classInfo = getClassInfo(list.get(0));
         String tableName = classInfo.getTableName();
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         for (T t : list) {
             ContentValues values = classInfo.getContentValues(t);
@@ -285,7 +286,7 @@ public abstract class DBProxy {
      * @param sql
      */
     public final void execSQL(String... sql) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         for (String s : sql) {
             database.execSQL(s);
@@ -328,7 +329,7 @@ public abstract class DBProxy {
      * @return
      */
     public final int delete(String tableName, String where, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         database.beginTransaction();
         int row = database.delete(tableName, where, args);
         database.setTransactionSuccessful();
@@ -360,7 +361,7 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> long queryCount(String tableName, String where, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         StringBuilder sql = new StringBuilder("SELECT COUNT(").append(IDColumn.PRIMARY_ID).append(") AS count FROM ");
         sql.append(tableName);
         if (where != null && where.trim().length() > 0) {
@@ -403,7 +404,7 @@ public abstract class DBProxy {
         if (where == null) {
             throw new NullPointerException("缺少WHERE条件语句！");
         }
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         StringBuilder sql = new StringBuilder("SELECT ").append(IDColumn.PRIMARY_ID).append(" FROM ").append(tableName).append(" WHERE ").append(where);
         Cursor cursor = database.rawQuery(sql.toString(), args);
         long id = -1;
@@ -425,7 +426,7 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> T query(Class<T> clazz, String where, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         ClassInfo<T> classInfo = getClassInfo(clazz);
         Cursor cursor = database.query(classInfo.getTableName(), null, where, args, null, null, null);
         T t = classInfo.getInstanceObject(cursor);
@@ -456,7 +457,7 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> T queryBySql(Class<T> clazz, String sql, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         ClassInfo<T> classInfo = getClassInfo(clazz);
         T t = classInfo.getInstanceObject(cursor);
@@ -475,7 +476,7 @@ public abstract class DBProxy {
      * @return
      */
     public <T extends IDColumn> List<T> queryListBySql(Class<T> clazz, String sql, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         ClassInfo<T> classInfo = getClassInfo(clazz);
         List<T> list = classInfo.getInstanceList(cursor);
@@ -499,7 +500,7 @@ public abstract class DBProxy {
      */
     public <T extends IDColumn> List<T> queryList(Class<T> clazz, String selection, String[] selectionArgs, String groupBy, String having, String orderBy, String limit) {
         ClassInfo<T> classInfo = getClassInfo(clazz);
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         Cursor cursor = database.query(classInfo.getTableName(), null, selection, selectionArgs, groupBy, having, orderBy, limit);
         List<T> list = classInfo.getInstanceList(cursor);
         close(cursor);
@@ -545,7 +546,7 @@ public abstract class DBProxy {
      * @return
      */
     public Map<String, Object> query(String sql, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         String[] names = cursor.getColumnNames();
         Map<String, Object> map = null;
@@ -569,7 +570,7 @@ public abstract class DBProxy {
      * @return
      */
     public List<Map<String, Object>> queryListBySql(String sql, String... args) {
-        SQLiteDatabase database = getDatabase();
+        SQLiteDatabase database = openDatabase();
         Cursor cursor = database.rawQuery(sql, args);
         String[] names = cursor.getColumnNames();
         List<Map<String, Object>> list = new ArrayList<Map<String, Object>>();
@@ -621,9 +622,9 @@ public abstract class DBProxy {
      *
      * @return
      */
-    private SQLiteDatabase getDatabase() {
-        mOpenCount++;
-        return getCreateDatabase();
+    private synchronized SQLiteDatabase openDatabase() {
+        atomicInteger.incrementAndGet();
+        return getSQLiteDatabase();
     }
 
     /**
@@ -631,16 +632,15 @@ public abstract class DBProxy {
      *
      * @return
      */
-    public abstract SQLiteDatabase getCreateDatabase();
+    public abstract SQLiteDatabase getSQLiteDatabase();
 
     /**
      * 关闭数据库SQLiteDatabase，打开数据库计数减1
      *
      * @param database
      */
-    private void close(SQLiteDatabase database) {
-        mOpenCount--;
-        if (mOpenCount == 0 && database != null && database.isOpen()) {
+    private synchronized void close(SQLiteDatabase database) {
+        if (atomicInteger.decrementAndGet() == 0 && database != null && database.isOpen()) {
             database.close();
         }
     }
@@ -667,15 +667,6 @@ public abstract class DBProxy {
             return true;
         }
         return false;
-    }
-
-    /**
-     * 返回当前数据库打开关闭计数
-     *
-     * @return
-     */
-    public int getOpenCount() {
-        return mOpenCount;
     }
 
     /**

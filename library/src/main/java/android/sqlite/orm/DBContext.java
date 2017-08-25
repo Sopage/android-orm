@@ -33,7 +33,7 @@ public class DBContext {
         helper.setOnUpgrade(upgrade);
         DBProxy proxy = new DBProxy() {
             @Override
-            public SQLiteDatabase getCreateDatabase() {
+            public SQLiteDatabase getSQLiteDatabase() {
                 return helper.getWritableDatabase();
             }
         };

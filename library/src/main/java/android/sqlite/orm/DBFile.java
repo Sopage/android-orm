@@ -20,18 +20,17 @@ public class DBFile {
     }
 
     public DBProxy buildDBProxy() {
-        DBProxy proxy = new DBProxy() {
+        return new DBProxy() {
             private SQLiteDatabase database;
 
             @Override
-            public SQLiteDatabase getCreateDatabase() {
+            public SQLiteDatabase getSQLiteDatabase() {
                 if (database == null || !database.isOpen()) {
                     database = SQLiteDatabase.openOrCreateDatabase(dbFile, null);
                 }
                 return database;
             }
         };
-        return proxy;
     }
 
 }

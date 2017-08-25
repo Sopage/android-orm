@@ -30,12 +30,11 @@ public class DBContextUse {
         final OpenHelper helper = new OpenHelper(context, name, version);
         helper.addCreateTableSqlList(mSqlList);
         helper.setOnUpgrade(upgrade);
-        DBProxy proxy = new DBProxy() {
+        return new DBProxy() {
             @Override
-            public SQLiteDatabase getCreateDatabase() {
+            public SQLiteDatabase getSQLiteDatabase() {
                 return helper.getWritableDatabase();
             }
         };
-        return proxy;
     }
 }
