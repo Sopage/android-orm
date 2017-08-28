@@ -1,11 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.android.dbcenter">
+    package="android.data.provider">
 
     <application>
         <provider
             android:authorities="${applicationId}.DataProvider"
-            android:name="com.android.dbcenter.DataProvider"
-            android:process=":center"
+            android:name="android.data.provider.DataProvider"
+            android:process=":provider"
             android:multiprocess="false"/>
     </application>
 

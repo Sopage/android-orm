@@ -1,4 +1,4 @@
-package com.android.dbcenter;
+package android.data.provider;
 
 import android.content.Context;
 import android.content.pm.PackageInfo;
