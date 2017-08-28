@@ -3,8 +3,8 @@
 
     <application>
         <provider
-            android:authorities="${applicationId}.DataCenterProvider"
-            android:name="com.android.dbcenter.DataCenterProvider"
+            android:authorities="${applicationId}.DataProvider"
+            android:name="com.android.dbcenter.DataProvider"
             android:process=":center"
             android:multiprocess="false"/>
     </application>

@@ -13,46 +13,68 @@ import android.net.Uri;
 public class URICenter {
 
     private interface PATH {
-        String SWITCH = "/switch";
-        String INSERT = "/insert";
-        String UPDATE = "/update";
-        String DELETE = "/delete";
-        String QUERY = "/query";
+        String SWITCH = "switch";
+        String INSERT = "insert";
+        String UPDATE = "update";
+        String DELETE = "delete";
+        String QUERY = "query";
     }
 
-    private Context context;
     private String authority;
 
-    private URICenter(){
-
-    }
-
     public URICenter(Context context) {
-        this.context = context;
-        this.authority = String.format("content://%s", getAuthority(context));
+        this.authority = getAuthority(context);
     }
 
     public Uri getSwitchURI(String dbName) {
-        return Uri.parse(authority + PATH.SWITCH + "?database=" + dbName);
+        return new Uri.Builder()
+                .scheme("content")
+                .authority(authority)
+                .path(PATH.SWITCH)
+                .appendQueryParameter("database", dbName)
+                .build();
     }
 
-    public Uri getQueryURI(String table) {
-        return Uri.parse(authority + PATH.QUERY + "?table=" + table);
+    public Uri getQueryURI(String table, String group, String having, String limit) {
+        return new Uri.Builder()
+                .scheme("content")
+                .authority(authority)
+                .path(PATH.QUERY)
+                .appendQueryParameter("table", table)
+                .appendQueryParameter("group", group)
+                .appendQueryParameter("having", having)
+                .appendQueryParameter("limit", limit)
+                .build();
     }
 
     public Uri getInsertURI(String table) {
-        return Uri.parse(authority + PATH.INSERT + "?table=" + table);
+        return new Uri.Builder()
+                .scheme("content")
+                .authority(authority)
+                .path(PATH.INSERT)
+                .appendQueryParameter("table", table)
+                .build();
     }
 
     public Uri getUpdateURI(String table) {
-        return Uri.parse(authority + PATH.UPDATE + "?table=" + table);
+        return new Uri.Builder()
+                .scheme("content")
+                .authority(authority)
+                .path(PATH.UPDATE)
+                .appendQueryParameter("table", table)
+                .build();
     }
 
     public Uri getDeleteURI(String table) {
-        return Uri.parse(authority + PATH.DELETE + "?table=" + table);
+        return new Uri.Builder()
+                .scheme("content")
+                .authority(authority)
+                .path(PATH.DELETE)
+                .appendQueryParameter("table", table)
+                .build();
     }
 
-    private boolean checkUri(String path, Uri uri){
+    private boolean checkUri(String path, Uri uri) {
         return path.equals(uri.getPath());
     }
 
@@ -85,7 +107,7 @@ public class URICenter {
             PackageInfo info = pm.getPackageInfo(context.getPackageName(), PackageManager.GET_PROVIDERS);
             if (info.providers != null) {
                 for (ProviderInfo provider : info.providers) {
-                    if (provider.name.equals(DataCenterProvider.class.getName())) {
+                    if (provider.name.equals(DataProvider.class.getName())) {
                         return provider.authority;
                     }
                 }

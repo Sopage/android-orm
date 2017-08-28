@@ -28,7 +28,7 @@ public class SimpleActivity extends Activity implements View.OnClickListener {
             case R.id.btn_insert:
                 URICenter uriCenter = new URICenter(getApplicationContext());
                 getContentResolver().update(uriCenter.getSwitchURI("test" + index), new ContentValues(), null, null);
-                index ++;
+                index++;
                 break;
             case R.id.btn_insert_list:
                 break;
