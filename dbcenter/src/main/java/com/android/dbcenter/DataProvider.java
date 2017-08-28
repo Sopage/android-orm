@@ -26,7 +26,7 @@ public class DataProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         if (uriCenter.isQueryURI(uri)) {
             String table = uri.getQueryParameter("table");
-            if("null".equals(table)){
+            if ("null".equals(table)) {
                 return null;
             }
             String groupBy = uri.getQueryParameter("group");
@@ -71,7 +71,7 @@ public class DataProvider extends ContentProvider {
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         if (uriCenter.isDeleteURI(uri)) {
             String table = uri.getQueryParameter("table");
-            if("null".equals(table)){
+            if ("null".equals(table)) {
                 return -1;
             }
             if (database != null && database.isOpen()) {
@@ -89,7 +89,7 @@ public class DataProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         if (uriCenter.isUpdateURI(uri)) {
             String table = uri.getQueryParameter("table");
-            if("null".equals(table)){
+            if ("null".equals(table)) {
                 return -1;
             }
             if (database != null && database.isOpen()) {
