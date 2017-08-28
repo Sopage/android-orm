@@ -26,11 +26,22 @@ public class DataProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
         if (uriCenter.isQueryURI(uri)) {
             String table = uri.getQueryParameter("table");
+            if("null".equals(table)){
+                return null;
+            }
             String groupBy = uri.getQueryParameter("group");
             String having = uri.getQueryParameter("having");
             String limit = uri.getQueryParameter("limit");
             if (database != null && database.isOpen()) {
-                return database.query(false, table, projection, selection, selectionArgs, groupBy, having, sortOrder, limit);
+                return database.query(false,
+                        table,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        "null".equals(groupBy) ? null : groupBy,
+                        "null".equals(having) ? null : having,
+                        sortOrder,
+                        "null".equals(limit) ? null : limit);
             }
         }
         return null;
@@ -60,6 +71,9 @@ public class DataProvider extends ContentProvider {
     public int delete(Uri uri, String selection, String[] selectionArgs) {
         if (uriCenter.isDeleteURI(uri)) {
             String table = uri.getQueryParameter("table");
+            if("null".equals(table)){
+                return -1;
+            }
             if (database != null && database.isOpen()) {
                 int i = database.delete(table, selection, selectionArgs);
                 if (i > 0) {
@@ -75,6 +89,9 @@ public class DataProvider extends ContentProvider {
     public int update(Uri uri, ContentValues values, String selection, String[] selectionArgs) {
         if (uriCenter.isUpdateURI(uri)) {
             String table = uri.getQueryParameter("table");
+            if("null".equals(table)){
+                return -1;
+            }
             if (database != null && database.isOpen()) {
                 int i = database.update(table, values, selection, selectionArgs);
                 if (i > 0) {
@@ -99,7 +116,7 @@ public class DataProvider extends ContentProvider {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
-
+            db.execSQL("CREATE TABLE IF NOT EXISTS test(id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, test TEXT);");
         }
 
         @Override

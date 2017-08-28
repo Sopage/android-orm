@@ -75,7 +75,7 @@ public class URICenter {
     }
 
     private boolean checkUri(String path, Uri uri) {
-        return path.equals(uri.getPath());
+        return uri.getPath().startsWith("/" + path);
     }
 
     public boolean isSwitchURI(Uri uri) {
