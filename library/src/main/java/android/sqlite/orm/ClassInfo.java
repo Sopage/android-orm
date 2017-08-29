@@ -4,6 +4,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
@@ -32,7 +33,7 @@ public class ClassInfo<T extends IDColumn> {
         Field[] fields = clazz.getDeclaredFields();
         for (Field field : fields) {
             int modifiers = field.getModifiers();
-            if (modifiers == 25 || modifiers == 26 || modifiers == 28) {
+            if (modifiers == Modifier.STATIC || modifiers == Modifier.FINAL) {
                 continue;
             }
             field.setAccessible(true);
@@ -71,12 +72,7 @@ public class ClassInfo<T extends IDColumn> {
                 T t = mClass.newInstance();
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
-                    Field field;
-                    if (IDColumn.PRIMARY_ID.equals(columnName)) {
-                        field = mFieldMap.get(IDColumn.PRIMARY_ID);
-                    } else {
-                        field = mFieldMap.get(columnName);
-                    }
+                    Field field = mFieldMap.get(columnName);
                     if (field != null) {
                         setFieldValue(t, field, cursor, index);
                     }
@@ -97,12 +93,7 @@ public class ClassInfo<T extends IDColumn> {
                 T t = mClass.newInstance();
                 for (String columnName : columnNames) {
                     int index = cursor.getColumnIndex(columnName);
-                    Field field;
-                    if (IDColumn.PRIMARY_ID.equals(columnName)) {
-                        field = mFieldMap.get(IDColumn.PRIMARY_ID);
-                    } else {
-                        field = mFieldMap.get(columnName);
-                    }
+                    Field field = mFieldMap.get(columnName);
                     if (field != null) {
                         setFieldValue(t, field, cursor, index);
                     }
@@ -214,7 +205,7 @@ public class ClassInfo<T extends IDColumn> {
         } else if (classType.equals(String.class)) {
             field.set(t, cursor.getString(index));
         } else if (classType.equals(Boolean.TYPE) || classType.equals(Boolean.class)) {
-            field.set(t, cursor.getInt(index) == 1 ? true : false);
+            field.set(t, cursor.getInt(index) == 1);
         } else if (classType.equals(Long.TYPE) || classType.equals(Long.class)) {
             field.set(t, cursor.getLong(index));
         } else if (classType.equals(Double.TYPE) || classType.equals(Double.class)) {
