@@ -22,7 +22,7 @@ public class DBCenter {
         helper = new SQLiteOpenHelper(context, dbName, null, 1) {
             @Override
             public void onCreate(SQLiteDatabase db) {
-                db.execSQL("CREATE TABLE IF NOT EXISTS `test`(`_id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT);");
+                db.execSQL("CREATE TABLE IF NOT EXISTS `test`(`_id` INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, `name` TEXT);");
             }
 
             @Override
