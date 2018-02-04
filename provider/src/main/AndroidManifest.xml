@@ -1,0 +1,12 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="android.data.provider">
+
+    <application>
+        <provider
+            android:authorities="${applicationId}.DataProvider"
+            android:name="android.data.provider.DataProvider"
+            android:process=":provider"
+            android:multiprocess="false"/>
+    </application>
+
+</manifest>

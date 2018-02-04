@@ -44,10 +44,10 @@ public abstract class DBProxy {
      * @param <T>
      * @return
      */
-    protected final <T extends IDColumn> ClassInfo getClassInfo(Class<T> clazz) {
-        ClassInfo classInfo = mClassInfoMap.get(clazz);
+    protected final <T extends IDColumn> ClassInfo<T> getClassInfo(Class<T> clazz) {
+        ClassInfo<T> classInfo = mClassInfoMap.get(clazz);
         if (classInfo == null) {
-            classInfo = new ClassInfo(clazz);
+            classInfo = new ClassInfo<T>(clazz);
         }
         return classInfo;
     }
