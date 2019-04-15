@@ -1,4 +1,4 @@
-# cube-orm
+# cube-orm [![996.icu](https://img.shields.io/badge/link-996.icu-red.svg)](https://996.icu)
 此项目是为Android简单封装的SQLite数据库ORM, 实现自动建表和自动更新升级，实现基本的单表CRUD，提高数据库开发效率。
 ## 使用方法
 <b>Android Studio引用方式:</b>
@@ -49,3 +49,5 @@
 	DBFile dbFile = new DBFile(file path or File);
 	DBProxy db = dbFile.buildDBProxy();
 ##### `DBProxy.java`类包涵了所有数据库操作
+
+# [![LICENSE](https://img.shields.io/badge/license-Anti%20996-blue.svg)](https://github.com/996icu/996.ICU/blob/master/LICENSE)
