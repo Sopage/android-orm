@@ -1,6 +1,4 @@
 apply plugin: 'com.android.library'
-apply plugin: 'maven'
-apply plugin: 'signing'
 android {
     compileSdkVersion 15
     buildToolsVersion "22.0.1"
@@ -21,82 +19,5 @@ android {
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-}
-
-def isReleaseBuild() {
-    return VERSION_NAME.contains("SNAPSHOT") == false
-}
-
-afterEvaluate { project ->
-    uploadArchives {
-        repositories {
-            mavenDeployer {
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-                repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                    authentication(userName: OSS_USERNAME, password: OSS_PWD)
-                }
-                snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
-                    authentication(userName: OSS_USERNAME, password: OSS_PWD)
-                }
-                pom.groupId = POM_GROUP
-                pom.artifactId = POM_ARTIFACT_ID
-                pom.version = VERSION_NAME
-                pom.packaging = POM_PACKAGING
-                pom.project {
-                    name POM_NAME
-                    packaging POM_PACKAGING
-                    description POM_DESCRIPTION
-                    url POM_URL
-                    scm {
-                        url POM_SCM_URL
-                        connection POM_SCM_CONNECTION
-                        developerConnection POM_SCM_DEV_CONNECTION
-                    }
-                    licenses {
-                        license {
-                            name POM_LICENCE_NAME
-                            url POM_LICENCE_URL
-                            distribution POM_LICENCE_DIST
-                        }
-                    }
-                    issueManagement {
-                        system POM_ISSUE_SYSTEM
-                        url POM_ISSUE_URL
-                    }
-                    developers {
-                        developer {
-                            id POM_DEVELOPER_ID
-                            name POM_DEVELOPER_NAME
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    signing {
-        required { isReleaseBuild() && gradle.taskGraph.hasTask("uploadArchives") }
-        sign configurations.archives
-    }
-
-//    task androidJavadocs(type: Javadoc) {
-//        source = android.sourceSets.main.java.srcDirs
-//        classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-//    }
-//
-//    task androidJavadocsJar(type: Jar, dependsOn: androidJavadocs) {
-//        classifier = 'javadoc'
-//        from androidJavadocs.destinationDir
-//    }
-//
-//    task androidSourcesJar(type: Jar) {
-//        classifier = 'sources'
-//        from android.sourceSets.main.java.srcDirs
-//    }
-//
-//    artifacts {
-//        archives androidSourcesJar
-//        archives androidJavadocsJar
-//    }
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
 }

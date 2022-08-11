@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by sanders on 15/5/17.
@@ -18,12 +19,12 @@ public abstract class DBProxy {
     /**
      * 数据库操作计数，防止异常关闭问题
      */
-    private int mOpenCount = 0;
+    private final AtomicLong mOpenCount = new AtomicLong(0);
 
     /**
      * 用于缓存实体类Class和实体类详情
      */
-    private final Map<Class, ClassInfo> mClassInfoMap = new HashMap<Class, ClassInfo>();
+    private final Map<Class, ClassInfo> mClassInfoMap = new HashMap<>();
 
     /**
      * 获取一个实体类Class的详细信息并缓存
@@ -622,7 +623,7 @@ public abstract class DBProxy {
      * @return
      */
     private SQLiteDatabase getDatabase() {
-        mOpenCount++;
+        mOpenCount.incrementAndGet();
         return getCreateDatabase();
     }
 
@@ -639,8 +640,7 @@ public abstract class DBProxy {
      * @param database
      */
     private void close(SQLiteDatabase database) {
-        mOpenCount--;
-        if (mOpenCount == 0 && database != null && database.isOpen()) {
+        if (mOpenCount.decrementAndGet() == 0 && database != null && database.isOpen()) {
             database.close();
         }
     }
@@ -667,15 +667,6 @@ public abstract class DBProxy {
             return true;
         }
         return false;
-    }
-
-    /**
-     * 返回当前数据库打开关闭计数
-     *
-     * @return
-     */
-    public int getOpenCount() {
-        return mOpenCount;
     }
 
     /**
